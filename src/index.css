@@ -1,0 +1,759 @@
+@import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Caveat:wght@400;700&family=Press+Start+2P&family=Special+Elite&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* ─── Global Base Tokens (dark intro/loader pages) ─── */
+  --color-bg: #050608;
+  --color-secondary: #0B1020;
+  --color-accent: #5A49D6;
+  --color-gold: #E9C874;
+  --color-white: #F7F7F7;
+  --color-gray: #B9B9B9;
+  --color-success: #10B981;
+  --color-danger: #F43F5E;
+
+  /* ─── Warm palette for Home & general rooms ─── */
+  --color-cream: #FDF6F0;
+  --color-blush: #F5D6C8;
+  --color-ink: #2A1F14;
+  --color-ink-light: #5C4833;
+  --color-rose: #D4756B;
+  --color-pink-soft: #F2B8C6;
+  --color-maroon: #6B2D3E;
+  --color-ivory: #FDF8F0;
+  --color-lavender: #C4B5E0;
+  --color-pastel-pink: #F8D5D5;
+
+  --font-display: 'Outfit', sans-serif;
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-handwritten: 'Caveat', cursive;
+  --font-mono: 'Press Start 2P', monospace;
+  --font-typewriter: 'Special Elite', cursive;
+  --font-serif: 'Playfair Display', serif;
+}
+
+/* ═══════════════════════════════════════════
+   SCROLLBAR UTILITY
+   ═══════════════════════════════════════════ */
+@utility scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   BASE RESETS
+   ═══════════════════════════════════════════ */
+html, body {
+  background-color: #050608;
+  color: #F7F7F7;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  overflow-x: hidden;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+  scroll-behavior: smooth;
+  cursor: none;
+}
+
+::selection {
+  background-color: rgba(90, 73, 214, 0.4);
+  color: #E9C874;
+}
+
+/* ═══════════════════════════════════════════
+   PER-ROOM THEME SCOPING
+   Each room wrapper sets CSS variables that
+   override the default dark theme locally.
+   ═══════════════════════════════════════════ */
+
+/* Home — Futuristic Portal Hallway (manga sci-fi style) */
+[data-room="home"] {
+  --room-bg: #0f0507; /* Near-black plum */
+  --room-text: #F7F7F7;
+  --room-text-muted: #B99C9F;
+  --room-accent: #D4756B;
+  --room-accent-glow: rgba(212, 117, 107, 0.45);
+  --room-card-bg: rgba(26, 12, 15, 0.75);
+  --room-card-border: rgba(212, 117, 107, 0.25);
+  --room-gold: #E9C874;
+}
+
+/* Manga — Deep charcoal dramatic */
+[data-room="manga"] {
+  --room-bg: #111111;
+  --room-text: #F7F7F7;
+  --room-text-muted: #888888;
+  --room-accent: #FFFFFF;
+  --room-accent-glow: rgba(255, 255, 255, 0.1);
+  --room-card-bg: rgba(30, 30, 30, 0.9);
+  --room-card-border: rgba(255, 255, 255, 0.08);
+  --room-gold: #E9C874;
+}
+
+/* Peace — Soft blue/lavender */
+[data-room="peace"] {
+  --room-bg: #E8E4F0;
+  --room-text: #3A3550;
+  --room-text-muted: #7B7591;
+  --room-accent: #8B7BC7;
+  --room-accent-glow: rgba(139, 123, 199, 0.25);
+  --room-card-bg: rgba(255, 255, 255, 0.6);
+  --room-card-border: rgba(139, 123, 199, 0.15);
+  --room-gold: #A89BD4;
+}
+
+/* Heart — Warm ivory/maroon */
+[data-room="heart"] {
+  --room-bg: #FDF8F0;
+  --room-text: #3D2024;
+  --room-text-muted: #8B6B6E;
+  --room-accent: #6B2D3E;
+  --room-accent-glow: rgba(107, 45, 62, 0.2);
+  --room-card-bg: rgba(253, 248, 240, 0.9);
+  --room-card-border: rgba(107, 45, 62, 0.12);
+  --room-gold: #C49A3C;
+}
+
+/* Games — Pastel pink arcade */
+[data-room="games"] {
+  --room-bg: #FFF0F3;
+  --room-text: #3D2030;
+  --room-text-muted: #9B7080;
+  --room-accent: #E88FA6;
+  --room-accent-glow: rgba(232, 143, 166, 0.3);
+  --room-card-bg: rgba(255, 240, 243, 0.9);
+  --room-card-border: rgba(232, 143, 166, 0.2);
+  --room-gold: #F2B8C6;
+}
+
+/* Credits — Warm minimal */
+[data-room="credits"] {
+  --room-bg: #FAF5EE;
+  --room-text: #2A1F14;
+  --room-text-muted: #8B7355;
+  --room-accent: #C49A3C;
+  --room-accent-glow: rgba(196, 154, 60, 0.2);
+  --room-card-bg: rgba(255, 252, 247, 0.85);
+  --room-card-border: rgba(42, 31, 20, 0.1);
+  --room-gold: #C49A3C;
+}
+
+/* ═══════════════════════════════════════════
+   PAPER TEXTURE & INK UTILITIES
+   ═══════════════════════════════════════════ */
+.paper-texture {
+  background-image: 
+    url("data:image/svg+xml,%3Csvg width='100' height='100' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.03'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+}
+
+.ink-border-card {
+  position: relative;
+  border: none !important;
+  overflow: visible;
+}
+
+.ink-border-card::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 16px;
+  background: transparent;
+  border: 2px solid var(--room-card-border, rgba(42, 31, 20, 0.12));
+  /* Slight organic irregularity via filter */
+  filter: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='rough'%3E%3CfeTurbulence type='turbulence' baseFrequency='0.04' numOctaves='4' seed='2'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='1.5'/%3E%3C/filter%3E%3C/svg%3E#rough");
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* ═══════════════════════════════════════════
+   SCREENTONE DOT PATTERN (Manga)
+   ═══════════════════════════════════════════ */
+.screentone-bg {
+  background-image: radial-gradient(circle, rgba(255,255,255,0.04) 1px, transparent 1px);
+  background-size: 8px 8px;
+}
+
+@keyframes screentone-drift {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 8px 8px; }
+}
+
+.screentone-animated {
+  animation: screentone-drift 20s linear infinite;
+}
+
+/* ═══════════════════════════════════════════
+   CRT SCANLINES (Arcade)
+   ═══════════════════════════════════════════ */
+.crt-scanlines::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.03) 2px,
+    rgba(0, 0, 0, 0.03) 4px
+  );
+  pointer-events: none;
+  z-index: 5;
+}
+
+/* ═══════════════════════════════════════════
+   INK WIPE TRANSITION
+   ═══════════════════════════════════════════ */
+.ink-wipe-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  pointer-events: none;
+  background: #2A1F14;
+  clip-path: circle(0% at 50% 50%);
+  transition: clip-path 0.6s cubic-bezier(0.77, 0, 0.175, 1);
+}
+
+.ink-wipe-overlay.active {
+  clip-path: circle(150% at 50% 50%);
+}
+
+/* ═══════════════════════════════════════════
+   AMBIENT / GLOW UTILITIES
+   ═══════════════════════════════════════════ */
+.ambient-glow {
+  background: radial-gradient(circle at var(--glow-x, 50%) var(--glow-y, 50%), rgba(90, 73, 214, 0.15) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.glass-panel {
+  background: rgba(11, 16, 32, 0.45);
+  backdrop-filter: blur(16px) saturate(120%);
+  -webkit-backdrop-filter: blur(16px) saturate(120%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+}
+
+.glass-panel-hover {
+  transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.glass-panel-hover:hover {
+  background: rgba(11, 16, 32, 0.65);
+  border-color: rgba(233, 200, 116, 0.3);
+  box-shadow: 0 15px 45px 0 rgba(90, 73, 214, 0.25);
+  transform: translateY(-4px);
+}
+
+/* ═══════════════════════════════════════════
+   FLOATING / ANIMATION KEYFRAMES
+   ═══════════════════════════════════════════ */
+@keyframes float {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(1deg); }
+}
+
+.floating-ui {
+  animation: float 6s ease-in-out infinite;
+}
+
+.floating-ui-delayed {
+  animation: float 7s ease-in-out infinite;
+  animation-delay: 2s;
+}
+
+@keyframes ink-float {
+  0%, 100% { transform: translateY(0px) translateX(0px) scale(1); opacity: 0.4; }
+  25% { transform: translateY(-20px) translateX(8px) scale(1.1); opacity: 0.6; }
+  50% { transform: translateY(-35px) translateX(-5px) scale(0.95); opacity: 0.3; }
+  75% { transform: translateY(-15px) translateX(12px) scale(1.05); opacity: 0.5; }
+}
+
+.ink-droplet {
+  animation: ink-float 12s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   BREATHING CIRCLE (Peace Room)
+   ═══════════════════════════════════════════ */
+@keyframes breathe-in-out {
+  0%, 100% {
+    transform: scale(1);
+    box-shadow: 0 0 30px rgba(139, 123, 199, 0.2);
+  }
+  50% {
+    transform: scale(1.6);
+    box-shadow: 0 0 80px rgba(139, 123, 199, 0.5), 0 0 120px rgba(196, 181, 224, 0.2);
+  }
+}
+
+.breathing-circle {
+  animation: breathe-in-out 8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* 4-7-8 pattern: 4s in, 7s hold, 8s out = 19s total */
+@keyframes breathe-478 {
+  0% { transform: scale(1); box-shadow: 0 0 30px rgba(139, 123, 199, 0.2); }
+  21% { transform: scale(1.6); box-shadow: 0 0 80px rgba(139, 123, 199, 0.5); } /* 4s in */
+  58% { transform: scale(1.6); box-shadow: 0 0 80px rgba(139, 123, 199, 0.5); } /* 7s hold */
+  100% { transform: scale(1); box-shadow: 0 0 30px rgba(139, 123, 199, 0.2); } /* 8s out */
+}
+
+.breathing-circle-478 {
+  animation: breathe-478 19s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* ═══════════════════════════════════════════
+   TYPEWRITER CURSOR (Heart Letters)
+   ═══════════════════════════════════════════ */
+@keyframes blink-caret {
+  0%, 100% { border-color: transparent; }
+  50% { border-color: #6B2D3E; }
+}
+
+.typewriter-cursor {
+  border-right: 2px solid #6B2D3E;
+  animation: blink-caret 0.8s step-end infinite;
+}
+
+/* ═══════════════════════════════════════════
+   3D CARD / BOOK STYLES
+   ═══════════════════════════════════════════ */
+.card-cursor-blur-container {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.card-cursor-blur-overlay {
+  position: absolute;
+  top: 0; left: 0; right: 0; bottom: 0;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+  z-index: 10;
+}
+
+.card-cursor-blur-overlay::before {
+  content: '';
+  position: absolute;
+  width: 250px;
+  height: 250px;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(90, 73, 214, 0.25) 0%, transparent 70%);
+  backdrop-filter: blur(25px);
+  -webkit-backdrop-filter: blur(25px);
+  transform: translate(-50%, -50%);
+  top: var(--mouse-y, 50%);
+  left: var(--mouse-x, 50%);
+}
+
+.card-cursor-blur-container:hover .card-cursor-blur-overlay {
+  opacity: 1;
+}
+
+.blur-backdrop-canvas {
+  filter: blur(8px) brightness(0.4);
+  transition: filter 0.8s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.manga-book-container {
+  perspective: 1500px;
+}
+
+.manga-page {
+  transform-style: preserve-3d;
+  transition: transform 0.8s cubic-bezier(0.645, 0.045, 0.355, 1.000);
+  transform-origin: left center;
+  backface-visibility: hidden;
+}
+
+.manga-page.flipped {
+  transform: rotateY(-180deg);
+}
+
+.manga-page-back {
+  transform: rotateY(180deg);
+  backface-visibility: hidden;
+}
+
+/* Page edge shadow for physical depth */
+.page-shadow-right {
+  box-shadow: inset -15px 0 30px -10px rgba(0,0,0,0.3), 5px 0 15px rgba(0,0,0,0.2);
+}
+
+.page-shadow-left {
+  box-shadow: inset 15px 0 30px -10px rgba(0,0,0,0.3), -5px 0 15px rgba(0,0,0,0.2);
+}
+
+/* Wax seal overlay for locked parts */
+.wax-seal-overlay {
+  background: radial-gradient(circle, rgba(139, 30, 30, 0.9) 0%, rgba(100, 20, 20, 0.7) 50%, transparent 70%);
+  border-radius: 50%;
+}
+
+/* ═══════════════════════════════════════════
+   CONFETTI & CELEBRATION
+   ═══════════════════════════════════════════ */
+#confetti-canvas {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 60;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   PAGE TRANSITION FOG (legacy for intro flow)
+   ═══════════════════════════════════════════ */
+.morph-fog {
+  position: fixed;
+  inset: 0;
+  background: radial-gradient(circle, rgba(11, 16, 32, 0.95) 0%, #050608 100%);
+  z-index: 100;
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* ═══════════════════════════════════════════
+   CONSTELLATION PATH ANIMATION
+   ═══════════════════════════════════════════ */
+.constellation-svg path {
+  stroke-dasharray: 1000;
+  stroke-dashoffset: 1000;
+  transition: stroke-dashoffset 4s ease-in-out;
+}
+
+.constellation-svg.active path {
+  stroke-dashoffset: 0;
+}
+
+/* ═══════════════════════════════════════════
+   CUSTOM SCROLLBAR
+   ═══════════════════════════════════════════ */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: rgba(255, 255, 255, 0.02);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: rgba(90, 73, 214, 0.35);
+  border-radius: 4px;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: rgba(233, 200, 116, 0.5);
+}
+
+/* ═══════════════════════════════════════════
+   TEXT GLOW UTILITIES
+   ═══════════════════════════════════════════ */
+.glow-text-blue {
+  text-shadow: 0 0 10px rgba(90, 73, 214, 0.5), 0 0 20px rgba(90, 73, 214, 0.3);
+}
+
+.glow-text-gold {
+  text-shadow: 0 0 10px rgba(233, 200, 116, 0.5), 0 0 20px rgba(233, 200, 116, 0.3);
+}
+
+.glow-text-ink {
+  text-shadow: 0 0 8px rgba(42, 31, 20, 0.15), 0 0 20px rgba(42, 31, 20, 0.08);
+}
+
+/* ═══════════════════════════════════════════
+   STPAGEFLIP INTEGRATION
+   ═══════════════════════════════════════════ */
+.stpageflip-wrapper {
+  box-shadow: 0 30px 70px rgba(0, 0, 0, 0.8);
+  background-color: #111;
+  border-radius: 6px;
+}
+.page-sheet {
+  background-color: #f7f7f7;
+  color: #111;
+  box-shadow: inset 3px 0 20px rgba(0, 0, 0, 0.15);
+}
+.page-sheet-left {
+  box-shadow: inset -3px 0 20px rgba(0, 0, 0, 0.15);
+}
+
+/* ═══════════════════════════════════════════
+   ENVELOPE TAB NAVIGATION (Heart Letters)
+   ═══════════════════════════════════════════ */
+.envelope-tab {
+  position: relative;
+  padding: 8px 20px 8px 16px;
+  background: var(--room-card-bg, #FDF8F0);
+  border: 1px solid var(--room-card-border, rgba(107, 45, 62, 0.12));
+  border-bottom: none;
+  border-radius: 8px 8px 0 0;
+  font-family: 'Special Elite', cursive;
+  font-size: 13px;
+  color: var(--room-text-muted, #8B6B6E);
+  cursor: pointer;
+  transition: all 0.3s ease;
+  transform-origin: bottom center;
+  transform: translateY(4px);
+}
+
+.envelope-tab:hover {
+  transform: translateY(0px);
+  color: var(--room-accent, #6B2D3E);
+  background: var(--room-bg, #FDF8F0);
+}
+
+.envelope-tab.active {
+  transform: translateY(0px);
+  color: var(--room-accent, #6B2D3E);
+  background: var(--room-bg, #FDF8F0);
+  border-color: var(--room-accent, #6B2D3E);
+  font-weight: 700;
+  z-index: 2;
+}
+
+/* ═══════════════════════════════════════════
+   ARCADE CABINET BUTTONS (Games)
+   ═══════════════════════════════════════════ */
+.arcade-btn {
+  position: relative;
+  padding: 16px 28px;
+  border-radius: 16px;
+  font-family: 'Press Start 2P', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border: 2px solid var(--room-card-border);
+  background: var(--room-card-bg);
+  color: var(--room-text);
+  box-shadow: 0 6px 0 rgba(0,0,0,0.15), 0 8px 20px rgba(0,0,0,0.1);
+  cursor: pointer;
+  transition: all 0.15s ease;
+  transform: translateY(0);
+}
+
+.arcade-btn:active {
+  transform: translateY(4px);
+  box-shadow: 0 2px 0 rgba(0,0,0,0.15), 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.arcade-btn.selected {
+  border-color: var(--room-accent);
+  background: var(--room-accent);
+  color: white;
+  box-shadow: 0 6px 0 rgba(0,0,0,0.2), 0 8px 25px var(--room-accent-glow);
+}
+
+/* ═══════════════════════════════════════════
+   PROGRESS DOTS (Home constellation tracker)
+   ═══════════════════════════════════════════ */
+.progress-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--room-text-muted, #8B7355);
+  background: transparent;
+  transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.progress-dot.visited {
+  background: var(--room-accent, #D4756B);
+  border-color: var(--room-accent, #D4756B);
+  box-shadow: 0 0 8px var(--room-accent-glow, rgba(212, 117, 107, 0.4));
+}
+
+.progress-line {
+  width: 24px;
+  height: 1px;
+  background: var(--room-card-border, rgba(42, 31, 20, 0.12));
+  transition: background 0.4s ease;
+}
+
+.progress-line.active {
+  background: var(--room-accent, #D4756B);
+}
+
+/* ═══════════════════════════════════════════
+   REDUCED MOTION
+   ═══════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+
+  .breathing-circle,
+  .breathing-circle-478,
+  .ink-droplet,
+  .floating-ui,
+  .floating-ui-delayed {
+    animation: none !important;
+  }
+}
+
+/* ═══════════════════════════════════════════
+   GRADIENT LOOP (Peace Room background)
+   ═══════════════════════════════════════════ */
+@keyframes peace-gradient {
+  0% { background-color: #E8E4F0; }
+  25% { background-color: #D4D0E8; }
+  50% { background-color: #E0E8F0; }
+  75% { background-color: #F0E8F0; }
+  100% { background-color: #E8E4F0; }
+}
+
+.peace-gradient-loop {
+  animation: peace-gradient 60s ease-in-out infinite;
+}
+
+/* ═══════════════════════════════════════════
+   FUTURISTIC PORTAL HALLWAY SCENERY (Home)
+   ═══════════════════════════════════════════ */
+.manga-halftone-overlay {
+  background-image: radial-gradient(circle, rgba(212, 117, 107, 0.08) 1.5px, transparent 1.5px);
+  background-size: 10px 10px;
+}
+
+@keyframes halftone-drift {
+  0% { background-position: 0px 0px; }
+  100% { background-position: 20px 20px; }
+}
+
+.manga-halftone-animated {
+  animation: halftone-drift 35s linear infinite;
+}
+
+.blueprint-grid-overlay {
+  background-image: 
+    linear-gradient(rgba(212, 117, 107, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(212, 117, 107, 0.03) 1px, transparent 1px);
+  background-size: 50px 50px;
+  background-position: center;
+}
+
+/* Radiating manga speed-lines (impact/focus lines) */
+@keyframes speed-lines-scale {
+  0%, 100% { transform: scale(1) rotate(0deg); opacity: 0.04; }
+  50% { transform: scale(1.02) rotate(0.5deg); opacity: 0.08; }
+}
+
+.manga-speed-lines {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    transparent 1.5deg,
+    rgba(212, 117, 107, 0.15) 1.5deg,
+    rgba(212, 117, 107, 0.15) 3.5deg
+  );
+  mask-image: radial-gradient(circle, transparent 20%, black 85%);
+  -webkit-mask-image: radial-gradient(circle, transparent 20%, black 85%);
+  animation: speed-lines-scale 0.15s steps(3) infinite;
+}
+
+/* Hinge door panel rotations */
+.door-panel-left {
+  transform-origin: left center;
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+.door-panel-right {
+  transform-origin: right center;
+  transition: transform 0.8s cubic-bezier(0.25, 1, 0.5, 1);
+}
+
+/* Door 3D wrapper container */
+.door-3d-wrapper {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+.door-container {
+  transform-style: preserve-3d;
+  transition: transform 0.6s cubic-bezier(0.25, 1, 0.5, 1), filter 0.6s ease, opacity 0.6s ease;
+}
+
+/* Ground reflection/pool and impact lines */
+.manga-impact-pool {
+  background: radial-gradient(ellipse at center, rgba(233, 200, 116, 0.25) 0%, transparent 70%);
+  transform: rotateX(80deg);
+}
+
+.manga-ground-impact-lines {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    transparent 4deg,
+    rgba(233, 200, 116, 0.18) 4deg,
+    rgba(233, 200, 116, 0.18) 8deg
+  );
+  transform: rotateX(80deg);
+  mask-image: radial-gradient(circle, transparent 20%, black 80%);
+  -webkit-mask-image: radial-gradient(circle, transparent 20%, black 80%);
+}
+
+/* Pulse/glow effect for sigil icons */
+@keyframes sigil-breath {
+  0%, 100% { filter: drop-shadow(0 0 4px var(--room-accent-glow)) brightness(1); }
+  50% { filter: drop-shadow(0 0 12px var(--room-accent-glow)) brightness(1.2); }
+}
+
+.sigil-pulsing {
+  animation: sigil-breath 2.5s ease-in-out infinite;
+}
+
+/* Hand-inked outlines for text titles */
+.manga-inked-text {
+  -webkit-text-stroke: 1.5px #2A1F14;
+  text-shadow: 2px 2px 0px #2A1F14, 0 0 15px var(--room-accent-glow);
+}
+
+/* Title text outlines */
+.manga-title-script {
+  font-family: 'Playfair Display', serif;
+  font-style: italic;
+  font-weight: 300;
+  text-transform: lowercase;
+}
+
+.manga-title-bold {
+  font-family: 'Outfit', sans-serif;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: -0.02em;
+}
+
+/* Cleaned/Visited manga stamp overlay */
+.visited-manga-stamp {
+  border: 2px dashed #E9C874;
+  color: #E9C874;
+  font-family: 'Special Elite', monospace;
+  transform: rotate(-15deg);
+  box-shadow: 0 0 8px rgba(233, 200, 116, 0.2);
+  background: rgba(15, 5, 7, 0.85);
+}
+
+/* Full transition burst speedline overlay */
+@keyframes portal-burst-lines {
+  0% { transform: scale(0.6) rotate(0deg); opacity: 0; }
+  50% { opacity: 0.95; }
+  100% { transform: scale(1.8) rotate(360deg); opacity: 0; }
+}
+
+.portal-burst-overlay {
+  background: repeating-conic-gradient(
+    from 0deg at 50% 50%,
+    transparent 0deg,
+    transparent 2deg,
+    rgba(255, 255, 255, 0.3) 2deg,
+    rgba(255, 255, 255, 0.3) 4deg
+  );
+  animation: portal-burst-lines 0.5s ease-out infinite;
+  z-index: 9998;
+}
+
