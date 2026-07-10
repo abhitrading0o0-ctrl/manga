@@ -670,7 +670,6 @@ html, body {
 /* Door 3D wrapper container */
 .door-3d-wrapper {
   perspective: 1000px;
-  transform-style: preserve-3d;
 }
 
 .door-container {

@@ -381,17 +381,27 @@ export const Homepage: React.FC = () => {
           return (
             <div
               key={item.id}
-              className={`door-wrapper-${idx} absolute w-28 h-56 sm:w-40 sm:h-80 flex flex-col items-center transition-[opacity] duration-500`}
+              className={`door-wrapper-${idx} absolute w-28 h-56 sm:w-40 sm:h-80 flex flex-col items-center cursor-pointer`}
               style={{
                 left: leftPos,
-                transform: getDoorTransform(idx),
+                perspective: '1000px',
                 zIndex: isHovered || isCurrentTransition ? 50 : 20 - Math.abs(idx - 2),
-                opacity: hoveredDoor !== null && hoveredDoor !== idx && !isCurrentTransition ? 0.35 : 1
+                opacity: hoveredDoor !== null && hoveredDoor !== idx && !isCurrentTransition ? 0.35 : 1,
+                transition: 'opacity 0.5s ease',
               }}
               onMouseEnter={() => transitioningDoor === null && setHoveredDoor(idx)}
               onMouseLeave={() => setHoveredDoor(null)}
               onClick={() => handleDoorClick(idx, item.view)}
             >
+              {/* Inner 3D visual wrapper — pointer-events:none so clicks pass through to parent */}
+              <div
+                className="w-full h-full relative"
+                style={{
+                  transform: getDoorTransform(idx),
+                  transformStyle: 'preserve-3d',
+                  pointerEvents: 'none',
+                }}
+              >
               {/* Ground highlights under hovered door */}
               {isHovered && (
                 <>
@@ -505,6 +515,7 @@ export const Homepage: React.FC = () => {
                   </span>
                 </div>
               </div>
+              </div>{/* end inner 3D visual wrapper */}
             </div>
           );
         })}
