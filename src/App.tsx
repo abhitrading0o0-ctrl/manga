@@ -48,14 +48,14 @@ const AppRouter: React.FC = () => {
         prevViewRef.current = currentView;
         return;
       }
-      if (currentView === 'LOADER' || currentView === 'INTRO') {
-        playTrack(0); // Track 0 - Beethoven: Moonlight Sonata (Mysterious & Cinematic Intro)
+      if (currentView === 'LOADER' || currentView === 'INTRO' || currentView === 'SURPRISE') {
+        playTrack(0); // Track 0 - Richy Mitch & The Coal Miners - Evergreen (Instrumental)
       } else if (currentView === 'SCROLL') {
-        playTrack(1); // Track 1 - Debussy: Clair de Lune (Bright & Emotional Scroll Journey)
+        playTrack(1); // Track 1 - Love story (Fbeatz Version) (Instrumental)
       } else if (currentView === 'GAMES' || currentView === 'HEART') {
-        playTrack(3); // Track 3 - Bach: Cello Suite No. 1 (Warm & Engaging Cello for interactive rooms)
+        playTrack(5); // Track 5 - Bach: Cello Suite No. 1 (Warm & Engaging Cello)
       } else {
-        playTrack(2); // Track 2 - Satie: Gymnopédie No. 1 (Spacious & Cosmic Piano for the Main Universe)
+        playTrack(4); // Track 4 - Satie: Gymnopédie No. 1 (Spacious & Cosmic Piano)
       }
       prevViewRef.current = currentView;
     }

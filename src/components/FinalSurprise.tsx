@@ -27,7 +27,7 @@ const wishes = [
   "I wish you outgrow every doubt someone else planted in you.",
   "I wish your money grows without you having to sacrifice your joy for it.",
   "I wish a stranger's kindness catches you off guard one day this year.",
-  "I wish you climb something — a mountain, a challenge, anything — and look back proud.",
+  "I wish you climb something  a mountain, a challenge, anything  and look back proud.",
   "I wish you never mistake being alone for being lonely.",
   "I wish your art is still yours even after the whole world has seen it.",
   "I wish you taste food in a country you never expected to visit.",
@@ -48,10 +48,10 @@ const wishes = [
   "I wish you a desert sunset that stops you mid-sentence.",
   "I wish your bank account stops being a source of stress.",
   "I wish you meet an animal in the wild that looks at you like it recognizes you.",
-  "I wish your art is protected — from theft, from doubt, from anyone who'd undervalue it.",
+  "I wish your art is protected  from theft, from doubt, from anyone who'd undervalue it.",
   "I wish you a hundred birthdays and not one of them spent feeling unloved.",
   "I wish your favorite hobby never becomes a chore.",
-  "I wish you stand somewhere so old — ruins, temples, cities — that time feels different for a moment.",
+  "I wish you stand somewhere so old  ruins, temples, cities  that time feels different for a moment.",
   "I wish you never have to fight for a love that should come easily.",
   "I wish your health outlasts everyone's expectations of you.",
   "I wish you sail somewhere, even once, just to feel the world move under you.",
@@ -115,7 +115,7 @@ const wishes = [
   "I wish your finances never dictate the size of your dreams.",
   "I wish you a hundred years of being exactly, unapologetically yourself.",
   "I wish protection surrounds every relationship you choose to enter.",
-  "I wish you a life so full — of art, of travel, of love, of health — that a hundred years barely feels like enough."
+  "I wish you a life so full  of art, of travel, of love, of health  that a hundred years barely feels like enough."
 ];
 
 const prefersReducedMotion = () =>
