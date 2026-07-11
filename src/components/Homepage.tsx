@@ -107,7 +107,6 @@ export const Homepage: React.FC = () => {
       view: "HEART",
       tagline: "The Message",
       accentColor: "#D4756B",
-      sigil: <HeartSigil />
     },
     {
       id: "manga",
