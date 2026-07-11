@@ -10,7 +10,7 @@ interface MenuItem {
   view: ViewType;
   tagline: string;
   accentColor: string;
-  sigil: React.ReactNode;
+  sigil?: React.ReactNode;
 }
 
 // ─── Custom hand-inked manga sigils ───
@@ -37,13 +37,7 @@ const PeaceSigil = () => (
   </svg>
 );
 
-const HeartSigil = () => (
-  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-12 h-12">
-    {/* Cracked heart */}
-    <path d="M 32 54 C 32 54 8 36 8 20 C 8 11 16 5 24 11 C 28 14 32 19 32 19 C 32 19 36 14 40 11 C 48 5 56 11 56 20 C 56 36 32 54 32 54 Z" strokeLinecap="round" strokeLinejoin="round" />
-    <path d="M 32 19 L 29 27 L 35 34 L 28 41 L 33 48" strokeLinecap="round" strokeLinejoin="round" />
-  </svg>
-);
+
 
 const ArcadeSigil = () => (
   <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-12 h-12">
