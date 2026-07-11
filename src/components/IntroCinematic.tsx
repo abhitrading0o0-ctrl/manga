@@ -70,7 +70,7 @@ const CinematicText: React.FC<CinematicTextProps> = ({ text, visible }) => {
 
 export const IntroCinematic: React.FC = () => {
   const { setView } = useView();
-  const { playSound } = useAudio();
+  const { playSound, playTrack } = useAudio();
 
   const [slideIndex, setSlideIndex] = useState(0);
   const [showHappyBirthday, setShowHappyBirthday] = useState(false);
@@ -211,6 +211,7 @@ export const IntroCinematic: React.FC = () => {
 
   const handleStart = () => {
     playSound('click');
+    playTrack(1);
     setView('SCROLL');
   };
 

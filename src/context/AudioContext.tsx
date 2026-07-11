@@ -24,6 +24,14 @@ const AudioContext = createContext<AudioContextType | undefined>(undefined);
 // Peaceful track URLs
 const AMBIENT_TRACKS = [
   {
+    title: "Richy Mitch & The Coal Miners - Evergreen (Instrumental)",
+    url: "/audio/evergreen.mp3"
+  },
+  {
+    title: "Love story (Fbeatz Version) (Instrumental)",
+    url: "/audio/lovestory.mp3"
+  },
+  {
     title: "Beethoven - Moonlight Sonata",
     url: "https://upload.wikimedia.org/wikipedia/commons/transcoded/c/c5/Ludwig_van_Beethoven_-_sonata_no._14_in_c_sharp_minor_%27moonlight%27%2C_op._27_no._2_-_i._adagio_sostenuto.ogg/Ludwig_van_Beethoven_-_sonata_no._14_in_c_sharp_minor_%27moonlight%27%2C_op._27_no._2_-_i._adagio_sostenuto.ogg.mp3",
     fallbackUrl: "https://upload.wikimedia.org/wikipedia/commons/c/c5/Ludwig_van_Beethoven_-_sonata_no._14_in_c_sharp_minor_%27moonlight%27%2C_op._27_no._2_-_i._adagio_sostenuto.ogg"
