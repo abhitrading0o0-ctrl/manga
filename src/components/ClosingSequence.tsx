@@ -162,7 +162,7 @@ export const ClosingSequence: React.FC = () => {
   const line4NightsRef = useRef<HTMLSpanElement>(null);
 
   // Track played state for lazy observer triggering
-
+  const hasPlayedRef = useRef<Record<number, boolean>>({});
 
   // Canvas drawing references
   const shootingStar = useRef<{
@@ -358,11 +358,10 @@ export const ClosingSequence: React.FC = () => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
             const index = Number(entry.target.getAttribute('data-index'));
-            setHasPlayed((prev) => {
-              if (prev[index]) return prev;
+            if (!hasPlayedRef.current[index]) {
+              hasPlayedRef.current[index] = true;
               triggerAnimation(index);
-              return { ...prev, [index]: true };
-            });
+            }
           }
         });
       },

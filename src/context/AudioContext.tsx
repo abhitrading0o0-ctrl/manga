@@ -244,7 +244,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
           });
           howl.fade(0, volume, CROSSFADE_TIME);
         } else {
-          oldHowl?.unload();
+          (oldHowl as unknown as Howl).unload();
         }
 
         stopProceduralSynth();
