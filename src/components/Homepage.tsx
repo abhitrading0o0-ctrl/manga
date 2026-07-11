@@ -63,15 +63,7 @@ const CreditsSigil = () => (
   </svg>
 );
 
-const SurpriseSigil = () => (
-  <svg viewBox="0 0 64 64" fill="none" stroke="currentColor" strokeWidth="2.2" className="w-16 h-16">
-    <polygon points="32,6 54,20 54,48 32,58 10,48 10,20" strokeLinecap="round" strokeLinejoin="round" />
-    <circle cx="32" cy="32" r="10" />
-    <path d="M 32 6 L 32 58" opacity="0.3" />
-    <path d="M 10 20 L 54 48" opacity="0.3" />
-    <path d="M 10 48 L 54 20" opacity="0.3" />
-  </svg>
-);
+
 
 export const Homepage: React.FC = () => {
   const { setView, previousView, visitedRooms, allRoomsVisited, requestRestart, confirmRestart, cancelRestart, confirmingRestart } = useView();

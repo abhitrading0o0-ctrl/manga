@@ -6,8 +6,6 @@ export const CustomCursor: React.FC = () => {
   const { currentView } = useView();
 
   const [isVisible, setIsVisible] = useState(false);
-  const [isHovered, setIsHovered] = useState(false);
-  const [isClicked, setIsClicked] = useState(false);
   
   const cursorDotRef = useRef<HTMLDivElement | null>(null);
 
@@ -67,34 +65,7 @@ export const CustomCursor: React.FC = () => {
       }
     };
 
-    // Right-click and context button verification guards (only trigger left click)
-    const onMouseDown = (e: MouseEvent) => {
-      if (e.button === 0) setIsClicked(true);
-    };
-    
-    const onMouseUp = (e: MouseEvent) => {
-      if (e.button === 0) setIsClicked(false);
-    };
-
-    window.addEventListener('mousemove', onMouseMove);
-    window.addEventListener('mousedown', onMouseDown);
-    window.addEventListener('mouseup', onMouseUp);
-
-    // Dynamic hover listeners for links and buttons
-    const addHoverListeners = () => {
-      const interactives = document.querySelectorAll('button, a, [role="button"], input, select, textarea, .clickable');
-      interactives.forEach(el => {
-        el.addEventListener('mouseenter', () => setIsHovered(true));
-        el.addEventListener('mouseleave', () => setIsHovered(false));
-      });
-    };
-
-    // Periodically query DOM to attach hovers on newly rendered components
-    const interval = setInterval(addHoverListeners, 1000);
-
-    // Smooth Glide Loop using RequestAnimationFrame
     const tick = () => {
-      // Lerp calculations (0.2 factor for dot, 0.1 for ring delay)
       posDot.x += (mouse.x - posDot.x) * 0.22;
       posDot.y += (mouse.y - posDot.y) * 0.22;
 
@@ -104,14 +75,13 @@ export const CustomCursor: React.FC = () => {
 
       requestAnimationFrame(tick);
     };
-    
+
     const rafId = requestAnimationFrame(tick);
+
+    window.addEventListener('mousemove', onMouseMove);
 
     return () => {
       window.removeEventListener('mousemove', onMouseMove);
-      window.removeEventListener('mousedown', onMouseDown);
-      window.removeEventListener('mouseup', onMouseUp);
-      clearInterval(interval);
       cancelAnimationFrame(rafId);
     };
   }, [currentView]);

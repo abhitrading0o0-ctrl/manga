@@ -458,7 +458,7 @@ export const MangaRoom: React.FC = () => {
     switch (pageData.type) {
       case 'cover':
         return (
-          <div className="w-full h-full relative flex items-center justify-center bg-[#f6f5f0]">
+          <div className="w-full h-full relative flex items-center justify-center manga-page-surface">
             <div className="paper-grain-overlay" />
             <div className="manga-hand-inked-frame" />
 
@@ -466,7 +466,8 @@ export const MangaRoom: React.FC = () => {
               <img 
                 src={pageData.image} 
                 alt="Manga Cover" 
-                className="w-[calc(100%-14px)] h-[calc(100%-14px)] object-contain relative z-10"
+                className="object-contain relative z-10"
+                style={{ width: 'calc(100% - 16px)', height: 'calc(100% - 16px)' }}
                 draggable={false}
               />
             )}
@@ -479,7 +480,7 @@ export const MangaRoom: React.FC = () => {
 
       case 'story':
         return (
-          <div className="w-full h-full relative flex items-center justify-center bg-[#f6f5f0]">
+          <div className="w-full h-full relative flex items-center justify-center manga-page-surface">
             <div className="paper-grain-overlay" />
             <div className="manga-hand-inked-frame" />
 
@@ -487,7 +488,8 @@ export const MangaRoom: React.FC = () => {
               <img 
                 src={pageData.image} 
                 alt={`Manga Page ${pageData.num}`} 
-                className="w-[calc(100%-14px)] h-[calc(100%-14px)] object-contain relative z-10"
+                className="object-contain relative z-10"
+                style={{ width: 'calc(100% - 16px)', height: 'calc(100% - 16px)' }}
                 draggable={false}
               />
             )}
@@ -500,7 +502,7 @@ export const MangaRoom: React.FC = () => {
 
       case 'end':
         return (
-          <div className="w-full h-full flex flex-col items-center justify-center bg-[#f6f5f0] p-8 relative overflow-hidden">
+          <div className="w-full h-full flex flex-col items-center justify-center p-8 relative overflow-hidden manga-page-surface">
             <div className="paper-grain-overlay" />
             <div className="absolute inset-0 manga-screentone-texture opacity-30 pointer-events-none" />
             <div className="manga-hand-inked-frame" />
@@ -524,14 +526,17 @@ export const MangaRoom: React.FC = () => {
 
       case 'locked':
         return (
-          <div className="w-full h-full flex flex-col items-center justify-center gap-6 bg-[#1a1a1a] relative">
-            <div className="w-32 h-32 wax-seal-overlay flex items-center justify-center">
+          <div className="w-full h-full flex flex-col items-center justify-center gap-6 relative manga-page-surface bg-[#1a1a1a] !bg-none">
+            <div className="paper-grain-overlay" />
+            <div className="manga-hand-inked-frame !border-white/20" />
+            
+            <div className="w-32 h-32 wax-seal-overlay flex items-center justify-center relative z-10">
               <span className="text-4xl">🔒</span>
             </div>
-            <h3 className="text-lg font-bold text-white/60 font-serif tracking-wider">
+            <h3 className="text-lg font-bold text-white/60 font-serif tracking-wider relative z-10">
               Sealed Chapter
             </h3>
-            <p className="text-xs text-white/30 font-sans font-light text-center max-w-xs">
+            <p className="text-xs text-white/30 font-sans font-light text-center max-w-xs relative z-10">
               This part will be unlocked in a future update...
             </p>
           </div>
@@ -646,9 +651,9 @@ export const MangaRoom: React.FC = () => {
         className={`manga-book relative z-10 w-full transition-all duration-300 manga-book-container overflow-hidden rounded-lg ${isFullScreen ? 'max-w-3xl h-[82vh] max-h-[82vh] aspect-[5/7]' : 'max-w-xl h-[70vh] max-h-[70vh] aspect-[5/7]'}`}
       >
         <div 
-          className="flex h-full"
+          ref={bookRef}
+          className="flex h-full w-full"
           style={{
-            width: `${pages.length * 100}%`,
             transform: `translateX(calc(-${currentPage * 100}% + ${dragOffset}px))`,
             transition: isDragging ? 'none' : 'transform 0.45s cubic-bezier(0.25, 1, 0.5, 1)',
             touchAction: 'none',
@@ -659,14 +664,13 @@ export const MangaRoom: React.FC = () => {
           onPointerUp={handlePointerUp}
           onPointerCancel={snapBack}
         >
-          {pages.map((page, idx) => {
+          {pages.map((_, idx) => {
             // Render only current and adjacent pages to optimize loading and memory use
             const isVisible = Math.abs(idx - currentPage) <= 1;
             return (
               <div 
                 key={idx} 
-                className="h-full flex-shrink-0 select-none"
-                style={{ width: `${100 / pages.length}%` }}
+                className="h-full w-full flex-shrink-0 select-none"
               >
                 {isVisible ? renderPageContentForIndex(idx) : null}
               </div>

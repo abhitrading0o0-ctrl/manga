@@ -41,6 +41,11 @@ const AppRouter: React.FC = () => {
     
     // Only switch tracks automatically if the view has actually changed
     if (prevViewRef.current !== currentView) {
+      if (currentView === 'PEACE') {
+        // Bypass auto-switching for Peace Room soundscapes
+        prevViewRef.current = currentView;
+        return;
+      }
       if (currentView === 'LOADER' || currentView === 'INTRO') {
         playTrack(0); // Track 0 - Beethoven: Moonlight Sonata (Mysterious & Cinematic Intro)
       } else if (currentView === 'SCROLL') {

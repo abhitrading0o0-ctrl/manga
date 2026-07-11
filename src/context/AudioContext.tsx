@@ -13,7 +13,10 @@ interface AudioContextType {
   prevTrack: () => void;
   playSound: (type: 'hover' | 'click' | 'shake' | 'open' | 'reveal' | 'pageFlip' | 'doorOpen') => void;
   setPeaceEnvironment: (env: string | null) => void;
-  tracks: { title: string; url: string; fallbackUrl?: string }[];
+  tracks: { title: string; url: string; fallbackUrl?: string; id?: string; label?: string; file?: string; icon?: string }[];
+  isPeaceMode: boolean;
+  setPeaceMode: (active: boolean) => void;
+  selectTrack: (index: number) => void;
 }
 
 const AudioContext = createContext<AudioContextType | undefined>(undefined);
@@ -42,10 +45,48 @@ const AMBIENT_TRACKS = [
   }
 ];
 
+const PEACE_TRACKS = [
+  {
+    id: 'gentle-rain',
+    label: 'Gentle Rain',
+    title: 'Gentle Rain',
+    icon: 'cloud-rain',
+    file: '/audio/peace-room/gentle-rain.mp3',
+    url: '/audio/peace-room/gentle-rain.mp3',
+  },
+  {
+    id: 'ocean-waves',
+    label: 'Ocean Waves',
+    title: 'Ocean Waves',
+    icon: 'waves',
+    file: '/audio/peace-room/ocean-waves.mp3',
+    url: '/audio/peace-room/ocean-waves.mp3',
+  },
+  {
+    id: 'whispering-forest',
+    label: 'Whispering Forest',
+    title: 'Whispering Forest',
+    icon: 'leaf',
+    file: '/audio/peace-room/whispering-forest.mp3',
+    url: '/audio/peace-room/whispering-forest.mp3',
+  },
+  {
+    id: 'warm-bonfire',
+    label: 'Warm Bonfire',
+    title: 'Warm Bonfire',
+    icon: 'flame',
+    file: '/audio/peace-room/warm-bonfire.mp3',
+    url: '/audio/peace-room/warm-bonfire.mp3',
+  }
+];
+
 export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isMusicPlaying, setIsMusicPlaying] = useState<boolean>(false);
   const [volume, setVolumeState] = useState<number>(0.2);
   const [currentTrackIndex, setCurrentTrackIndex] = useState<number>(0);
+  const [isPeaceMode, setPeaceMode] = useState<boolean>(false);
+
+  const tracks = isPeaceMode ? PEACE_TRACKS : AMBIENT_TRACKS;
 
   // Keep volume and track index refs up-to-date to prevent closure staleness in procedural synth
   const volumeRef = useRef<number>(volume);
@@ -81,6 +122,16 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     }
   };
 
+  // Stop/reset when toggling peace mode
+  useEffect(() => {
+    if (trackHowlRef.current) {
+      trackHowlRef.current.unload();
+    }
+    stopProceduralSynth();
+    setIsMusicPlaying(false);
+    setCurrentTrackIndex(0);
+  }, [isPeaceMode]);
+
   // Set up Howler background track
   useEffect(() => {
     if (isMusicPlaying) {
@@ -89,9 +140,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         trackHowlRef.current.unload();
       }
 
-      const currentTrack = AMBIENT_TRACKS[currentTrackIndex];
+      const currentTrack = tracks[currentTrackIndex];
       const srcUrls = [currentTrack.url];
-      if (currentTrack.fallbackUrl) {
+      if ('fallbackUrl' in currentTrack && currentTrack.fallbackUrl) {
         srcUrls.push(currentTrack.fallbackUrl);
       }
 
@@ -101,10 +152,18 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         loop: true,
         volume: volume,
         onloaderror: () => {
+          if (isPeaceMode) {
+            console.warn("Howler load error in peace mode:", currentTrack.title);
+            return;
+          }
           console.warn("Howler load error, triggering Web Audio Procedural Synth fallback!");
           startProceduralSynth();
         },
         onplayerror: () => {
+          if (isPeaceMode) {
+            console.warn("Howler play error in peace mode:", currentTrack.title);
+            return;
+          }
           console.warn("Howler play error, triggering Web Audio Procedural Synth fallback!");
           startProceduralSynth();
         }
@@ -157,12 +216,17 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     setIsMusicPlaying(true);
   };
 
+  const selectTrack = (index: number) => {
+    initAudioCtx();
+    setCurrentTrackIndex(index);
+  };
+
   const nextTrack = () => {
-    setCurrentTrackIndex(prev => (prev + 1) % AMBIENT_TRACKS.length);
+    setCurrentTrackIndex(prev => (prev + 1) % tracks.length);
   };
 
   const prevTrack = () => {
-    setCurrentTrackIndex(prev => (prev - 1 + AMBIENT_TRACKS.length) % AMBIENT_TRACKS.length);
+    setCurrentTrackIndex(prev => (prev - 1 + tracks.length) % tracks.length);
   };
 
   // Play interface Sound Effects using Web Audio API synthesis (zero network dependancy!)
@@ -691,7 +755,10 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
       prevTrack,
       playSound,
       setPeaceEnvironment,
-      tracks: AMBIENT_TRACKS
+      tracks,
+      isPeaceMode,
+      setPeaceMode,
+      selectTrack
     }}>
       {children}
     </AudioContext.Provider>

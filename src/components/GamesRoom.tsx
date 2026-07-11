@@ -1,624 +1,458 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useView } from '../context/ViewContext';
 import { useAudio } from '../context/AudioContext';
+import { SnakeGame } from './games/SnakeGame';
+import { FlappyGame } from './games/FlappyGame';
+import { TracerGame } from './games/TracerGame';
+import gsap from 'gsap';
 
-type GameType = 'SNAKE' | 'FLAPPY' | 'ARTIST' | null;
+type GameType = 'SNAKE' | 'FLAPPY' | 'TRACER' | null;
+
+// Floating ambient particles
+const ArcadeParticles: React.FC = () => {
+  const particles = [
+    { size: 2.5, left: '6%', top: '20%', delay: '0s', dur: '18s', color: '#F472B6' },
+    { size: 3, left: '80%', top: '12%', delay: '2s', dur: '25s', color: '#FBBF24' },
+    { size: 2, left: '90%', top: '55%', delay: '4s', dur: '20s', color: '#F472B6' },
+    { size: 3.5, left: '15%', top: '75%', delay: '1s', dur: '22s', color: '#4ADE80' },
+    { size: 2, left: '50%', top: '88%', delay: '3s', dur: '28s', color: '#FBBF24' },
+    { size: 2.5, left: '28%', top: '35%', delay: '5s', dur: '24s', color: '#F472B6' },
+    { size: 2, left: '65%', top: '42%', delay: '1.5s', dur: '19s', color: '#4ADE80' },
+    { size: 3, left: '42%', top: '10%', delay: '6s', dur: '26s', color: '#FBBF24' },
+  ];
+  return (
+    <div className="absolute inset-0 overflow-hidden pointer-events-none -z-10">
+      {particles.map((p, idx) => (
+        <div
+          key={idx}
+          className="absolute rounded-full"
+          style={{
+            width: `${p.size}px`,
+            height: `${p.size}px`,
+            left: p.left,
+            top: p.top,
+            backgroundColor: p.color,
+            boxShadow: `0 0 6px ${p.color}, 0 0 12px ${p.color}`,
+            animation: `slow-drift ${p.dur} ease-in-out infinite`,
+            animationDelay: p.delay,
+            opacity: 0.5,
+          }}
+        />
+      ))}
+    </div>
+  );
+};
 
 export const GamesRoom: React.FC = () => {
   const { setView, markRoomVisited, highScores, saveHighScore } = useView();
-  const { playSound } = useAudio();
+  const { playSound, setMusicPlaying, isMusicPlaying } = useAudio();
 
   const [activeGame, setActiveGame] = useState<GameType>(null);
   const [gameState, setGameState] = useState<'IDLE' | 'PLAYING' | 'OVER'>('IDLE');
   const [score, setScore] = useState(0);
-
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const loopRef = useRef<number | null>(null);
+  const [level, setLevel] = useState(1);
+  const [isPoweredOn, setIsPoweredOn] = useState(false);
+  const screenRef = useRef<HTMLDivElement>(null);
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const wasMusicPlayingRef = useRef(false);
 
   useEffect(() => {
     markRoomVisited('games');
-    return () => stopGameLoop();
-  }, [activeGame]);
 
-  const stopGameLoop = () => {
-    if (loopRef.current) {
-      cancelAnimationFrame(loopRef.current);
-      loopRef.current = null;
+    // Flicker-in title animation
+    if (titleRef.current) {
+      const tl = gsap.timeline();
+      tl.fromTo(titleRef.current, 
+        { opacity: 0, filter: 'blur(8px)' },
+        { opacity: 1, filter: 'blur(0px)', duration: 0.3, ease: 'power2.out' }
+      )
+      .to(titleRef.current, { opacity: 0.3, duration: 0.08 })
+      .to(titleRef.current, { opacity: 1, duration: 0.08 })
+      .to(titleRef.current, { opacity: 0.6, duration: 0.05 })
+      .to(titleRef.current, { opacity: 1, duration: 0.15 });
     }
-  };
+
+    return () => {
+      // Restore music if unmounting/leaving room
+      if (wasMusicPlayingRef.current) {
+        setMusicPlaying(true);
+      }
+    };
+  }, []);
 
   const handleBackToIsland = () => {
     playSound('click');
     setView('HOME');
   };
 
-  const startNewGame = () => {
+  const toggleFullscreen = () => {
     playSound('click');
-    setGameState('PLAYING');
-    setScore(0);
-    if (activeGame === 'SNAKE') initSnakeGame();
-    if (activeGame === 'FLAPPY') initFlappyGame();
-    if (activeGame === 'ARTIST') initArtistGame();
-  };
+    const elem = screenRef.current;
+    if (!elem) return;
 
-  // ==========================================
-  // 1. SNAKE GAME LOGIC
-  // ==========================================
-  const snakeDirRef = useRef({ x: 0, y: -1 });
-  const snakeGridSize = 20;
-
-  const initSnakeGame = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    snakeDirRef.current = { x: 0, y: -1 };
-    let snake = [
-      { x: 10, y: 12 },
-      { x: 10, y: 13 },
-      { x: 10, y: 14 }
-    ];
-    let food = { x: 5, y: 5 };
-    let gridCountX = Math.floor(canvas.width / snakeGridSize);
-    let gridCountY = Math.floor(canvas.height / snakeGridSize);
-
-    const spawnFood = () => {
-      food = {
-        x: Math.floor(Math.random() * gridCountX),
-        y: Math.floor(Math.random() * gridCountY)
-      };
-      if (snake.some(s => s.x === food.x && s.y === food.y)) spawnFood();
-    };
-    spawnFood();
-
-    const handleDirKeys = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowUp' && snakeDirRef.current.y === 0) snakeDirRef.current = { x: 0, y: -1 };
-      if (e.key === 'ArrowDown' && snakeDirRef.current.y === 0) snakeDirRef.current = { x: 0, y: 1 };
-      if (e.key === 'ArrowLeft' && snakeDirRef.current.x === 0) snakeDirRef.current = { x: -1, y: 0 };
-      if (e.key === 'ArrowRight' && snakeDirRef.current.x === 0) snakeDirRef.current = { x: 1, y: 0 };
-    };
-    window.addEventListener('keydown', handleDirKeys);
-
-    // Touch/swipe support
-    let touchStartX = 0, touchStartY = 0;
-    const handleTouchStart = (e: TouchEvent) => {
-      touchStartX = e.touches[0].clientX;
-      touchStartY = e.touches[0].clientY;
-    };
-    const handleTouchEnd = (e: TouchEvent) => {
-      const dx = e.changedTouches[0].clientX - touchStartX;
-      const dy = e.changedTouches[0].clientY - touchStartY;
-      if (Math.abs(dx) > Math.abs(dy)) {
-        if (dx > 30 && snakeDirRef.current.x === 0) snakeDirRef.current = { x: 1, y: 0 };
-        if (dx < -30 && snakeDirRef.current.x === 0) snakeDirRef.current = { x: -1, y: 0 };
-      } else {
-        if (dy > 30 && snakeDirRef.current.y === 0) snakeDirRef.current = { x: 0, y: 1 };
-        if (dy < -30 && snakeDirRef.current.y === 0) snakeDirRef.current = { x: 0, y: -1 };
-      }
-    };
-    canvas.addEventListener('touchstart', handleTouchStart);
-    canvas.addEventListener('touchend', handleTouchEnd);
-
-    let lastTick = 0;
-    const speed = 100;
-
-    const runSnake = (timestamp: number) => {
-      if (gameState !== 'PLAYING') return;
-      loopRef.current = requestAnimationFrame(runSnake);
-      if (timestamp - lastTick < speed) return;
-      lastTick = timestamp;
-
-      const head = { 
-        x: snake[0].x + snakeDirRef.current.x, 
-        y: snake[0].y + snakeDirRef.current.y 
-      };
-
-      if (head.x < 0 || head.x >= gridCountX || head.y < 0 || head.y >= gridCountY) {
-        handleGameOver('snake');
-        window.removeEventListener('keydown', handleDirKeys);
-        canvas.removeEventListener('touchstart', handleTouchStart);
-        canvas.removeEventListener('touchend', handleTouchEnd);
-        return;
-      }
-
-      if (snake.some(s => s.x === head.x && s.y === head.y)) {
-        handleGameOver('snake');
-        window.removeEventListener('keydown', handleDirKeys);
-        canvas.removeEventListener('touchstart', handleTouchStart);
-        canvas.removeEventListener('touchend', handleTouchEnd);
-        return;
-      }
-
-      snake.unshift(head);
-
-      if (head.x === food.x && head.y === food.y) {
-        playSound('hover');
-        setScore(prev => prev + 10);
-        spawnFood();
-      } else {
-        snake.pop();
-      }
-
-      // Draw with pastel pink theme
-      ctx.fillStyle = '#FFF0F3';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw grid lines (subtle)
-      ctx.strokeStyle = 'rgba(232, 143, 166, 0.08)';
-      ctx.lineWidth = 0.5;
-      for (let x = 0; x < canvas.width; x += snakeGridSize) {
-        ctx.beginPath(); ctx.moveTo(x, 0); ctx.lineTo(x, canvas.height); ctx.stroke();
-      }
-      for (let y = 0; y < canvas.height; y += snakeGridSize) {
-        ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(canvas.width, y); ctx.stroke();
-      }
-
-      // Draw food
-      ctx.fillStyle = '#E88FA6';
-      ctx.beginPath();
-      ctx.arc(food.x * snakeGridSize + snakeGridSize/2, food.y * snakeGridSize + snakeGridSize/2, snakeGridSize/2 - 2, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Draw snake
-      snake.forEach((s, idx) => {
-        ctx.fillStyle = idx === 0 ? '#D4756B' : '#E88FA6';
-        const r = 3;
-        const x = s.x * snakeGridSize + 1;
-        const y = s.y * snakeGridSize + 1;
-        const w = snakeGridSize - 2;
-        const h = snakeGridSize - 2;
-        ctx.beginPath();
-        ctx.moveTo(x + r, y);
-        ctx.lineTo(x + w - r, y);
-        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
-        ctx.lineTo(x + w, y + h - r);
-        ctx.quadraticCurveTo(x + w, y + h, x + w - r, y + h);
-        ctx.lineTo(x + r, y + h);
-        ctx.quadraticCurveTo(x, y + h, x, y + h - r);
-        ctx.lineTo(x, y + r);
-        ctx.quadraticCurveTo(x, y, x + r, y);
-        ctx.fill();
+    if (!document.fullscreenElement) {
+      elem.requestFullscreen().catch((err) => {
+        console.warn(`Error attempting to enable fullscreen mode: ${err.message}`);
       });
-    };
-
-    loopRef.current = requestAnimationFrame(runSnake);
-  };
-
-  // ==========================================
-  // 2. FLAPPY BIRD GAME LOGIC
-  // ==========================================
-  const initFlappyGame = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let birdY = canvas.height / 2;
-    let velocity = 0;
-    const gravity = 0.28;
-    const lift = -6.0;
-
-    let pipes: { x: number; top: number; bottom: number; passed?: boolean }[] = [];
-    const pipeWidth = 50;
-    const gap = 120;
-    let frameCount = 0;
-
-    const onFlap = (e: KeyboardEvent | MouseEvent | TouchEvent) => {
-      if (e instanceof KeyboardEvent && e.key !== ' ') return;
-      playSound('hover');
-      velocity = lift;
-    };
-
-    window.addEventListener('keydown', onFlap);
-    canvas.addEventListener('click', onFlap);
-    canvas.addEventListener('touchstart', onFlap);
-
-    const runFlappy = () => {
-      if (gameState !== 'PLAYING') return;
-      loopRef.current = requestAnimationFrame(runFlappy);
-      frameCount++;
-
-      velocity += gravity;
-      birdY += velocity;
-
-      if (birdY > canvas.height - 15 || birdY < 0) {
-        handleGameOver('flappy');
-        window.removeEventListener('keydown', onFlap);
-        canvas.removeEventListener('click', onFlap);
-        canvas.removeEventListener('touchstart', onFlap);
-        return;
-      }
-
-      if (frameCount % 100 === 0) {
-        const topHeight = Math.random() * (canvas.height - gap - 60) + 30;
-        pipes.push({ x: canvas.width, top: topHeight, bottom: canvas.height - topHeight - gap });
-      }
-
-      for (let i = pipes.length - 1; i >= 0; i--) {
-        const p = pipes[i];
-        p.x -= 2.5;
-
-        if (p.x < 110 && p.x + pipeWidth > 80 && (birdY - 12 < p.top || birdY + 12 > canvas.height - p.bottom)) {
-          handleGameOver('flappy');
-          window.removeEventListener('keydown', onFlap);
-          canvas.removeEventListener('click', onFlap);
-          canvas.removeEventListener('touchstart', onFlap);
-          return;
-        }
-
-        if (!p.passed && p.x + pipeWidth < 85) {
-          p.passed = true;
-          playSound('hover');
-          setScore(prev => prev + 1);
-        }
-
-        if (p.x < -pipeWidth) pipes.splice(i, 1);
-      }
-
-      // Draw with pastel theme
-      ctx.fillStyle = '#FFF0F3';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw pipes
-      ctx.fillStyle = '#E88FA6';
-      pipes.forEach(p => {
-        // Top pipe with rounded bottom
-        ctx.beginPath();
-        ctx.roundRect(p.x, 0, pipeWidth, p.top, [0, 0, 8, 8]);
-        ctx.fill();
-        // Bottom pipe with rounded top
-        ctx.beginPath();
-        ctx.roundRect(p.x, canvas.height - p.bottom, pipeWidth, p.bottom, [8, 8, 0, 0]);
-        ctx.fill();
-      });
-
-      // Draw bird
-      ctx.beginPath();
-      ctx.fillStyle = '#D4756B';
-      ctx.arc(90, birdY, 12, 0, Math.PI * 2);
-      ctx.fill();
-      // Bird eye
-      ctx.beginPath();
-      ctx.fillStyle = '#FFF0F3';
-      ctx.arc(96, birdY - 3, 3, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.beginPath();
-      ctx.fillStyle = '#3D2030';
-      ctx.arc(97, birdY - 3, 1.5, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    loopRef.current = requestAnimationFrame(runFlappy);
-  };
-
-  // ==========================================
-  // 3. ARTIST CHALLENGE (Line Tracing)
-  // ==========================================
-  const robotPosRef = useRef({ x: 100, y: 150 });
-  const playerTrailRef = useRef<{ x: number; y: number }[]>([]);
-  const isTracingRef = useRef(false);
-
-  const [brushStyle, setBrushStyle] = useState<'rainbow' | 'gold' | 'neon'>('rainbow');
-  const [difficulty, setDifficulty] = useState<'normal' | 'hard'>('normal');
-
-  const initArtistGame = () => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    let pathPoints: { x: number; y: number }[] = [];
-    let activePointIdx = 0;
-    
-    const generatePath = () => {
-      pathPoints = [];
-      let x = 40;
-      let y = canvas.height / 2;
-      pathPoints.push({ x, y });
-      
-      const segmentCount = 6;
-      for (let i = 0; i < segmentCount; i++) {
-        x += (canvas.width - 80) / segmentCount;
-        y = Math.sin(i * 1.5) * 80 + canvas.height / 2 + (Math.random() - 0.5) * 50;
-        pathPoints.push({ x, y });
-      }
-    };
-    generatePath();
-
-    robotPosRef.current = { ...pathPoints[0] };
-    playerTrailRef.current = [];
-    isTracingRef.current = false;
-
-    let totalPointsTraced = 0;
-    let deviationSum = 0;
-
-    const handleTraceMove = (e: MouseEvent) => {
-      const rect = canvas.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
-      if (!isTracingRef.current) return;
-
-      playerTrailRef.current.push({ x: px, y: py });
-      if (playerTrailRef.current.length > 50) playerTrailRef.current.shift();
-
-      const dx = px - robotPosRef.current.x;
-      const dy = py - robotPosRef.current.y;
-      deviationSum += Math.sqrt(dx * dx + dy * dy);
-      totalPointsTraced++;
-    };
-
-    const handleTraceStart = () => { isTracingRef.current = true; playerTrailRef.current = []; };
-    const handleTraceEnd = () => { isTracingRef.current = false; };
-
-    canvas.addEventListener('mousemove', handleTraceMove);
-    canvas.addEventListener('mousedown', handleTraceStart);
-    canvas.addEventListener('mouseup', handleTraceEnd);
-
-    const robotSpeed = difficulty === 'normal' ? 1.8 : 3.0;
-
-    const runArtist = () => {
-      if (gameState !== 'PLAYING') return;
-      loopRef.current = requestAnimationFrame(runArtist);
-
-      const target = pathPoints[activePointIdx];
-      const dx = target.x - robotPosRef.current.x;
-      const dy = target.y - robotPosRef.current.y;
-      const dist = Math.sqrt(dx * dx + dy * dy);
-
-      if (dist < 4) {
-        activePointIdx++;
-        if (activePointIdx >= pathPoints.length) {
-          const averageDeviation = totalPointsTraced > 0 ? deviationSum / totalPointsTraced : 100;
-          const accuracy = Math.max(0, Math.min(100, Math.round(100 - averageDeviation)));
-          setScore(accuracy);
-          handleGameOver('artist', accuracy);
-          canvas.removeEventListener('mousemove', handleTraceMove);
-          canvas.removeEventListener('mousedown', handleTraceStart);
-          canvas.removeEventListener('mouseup', handleTraceEnd);
-          return;
-        }
-      } else {
-        robotPosRef.current.x += (dx / dist) * robotSpeed;
-        robotPosRef.current.y += (dy / dist) * robotSpeed;
-      }
-
-      // Draw with pastel theme
-      ctx.fillStyle = '#FFF0F3';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw target curve
-      ctx.beginPath();
-      ctx.strokeStyle = 'rgba(232, 143, 166, 0.15)';
-      ctx.lineWidth = 15;
-      ctx.lineCap = 'round';
-      ctx.lineJoin = 'round';
-      ctx.moveTo(pathPoints[0].x, pathPoints[0].y);
-      for (let i = 1; i < pathPoints.length; i++) ctx.lineTo(pathPoints[i].x, pathPoints[i].y);
-      ctx.stroke();
-
-      // Draw player trail
-      if (playerTrailRef.current.length > 1) {
-        ctx.beginPath();
-        ctx.strokeStyle = brushStyle === 'rainbow' ? '#D4756B' : brushStyle === 'gold' ? '#C49A3C' : '#8B7BC7';
-        ctx.lineWidth = 4;
-        ctx.moveTo(playerTrailRef.current[0].x, playerTrailRef.current[0].y);
-        for (let i = 1; i < playerTrailRef.current.length; i++) ctx.lineTo(playerTrailRef.current[i].x, playerTrailRef.current[i].y);
-        ctx.stroke();
-      }
-
-      // Draw robot node
-      ctx.beginPath();
-      ctx.fillStyle = '#E88FA6';
-      ctx.arc(robotPosRef.current.x, robotPosRef.current.y, 8, 0, Math.PI * 2);
-      ctx.fill();
-    };
-
-    loopRef.current = requestAnimationFrame(runArtist);
-  };
-
-  const handleGameOver = (gameKey: 'snake' | 'flappy' | 'artist', finalScoreVal?: number) => {
-    playSound('reveal');
-    setGameState('OVER');
-    stopGameLoop();
-    const checkScore = finalScoreVal ?? score;
-    saveHighScore(gameKey, checkScore);
+    } else {
+      document.exitFullscreen();
+    }
   };
 
   const selectGame = (type: GameType) => {
     playSound('click');
-    setActiveGame(type);
-    setGameState('IDLE');
-    setScore(0);
-    stopGameLoop();
+
+    if (activeGame === type) return;
+
+    // If changing game or returning to select, restore background music if we had paused it
+    if (wasMusicPlayingRef.current) {
+      setMusicPlaying(true);
+      wasMusicPlayingRef.current = false;
+    }
+
+    // CRT power-off effect on current screen
+    if (screenRef.current && isPoweredOn) {
+      const tl = gsap.timeline();
+      tl.to(screenRef.current, {
+        scaleY: 0.01,
+        scaleX: 1.1,
+        opacity: 0.8,
+        duration: 0.15,
+        ease: 'power4.in',
+      })
+      .to(screenRef.current, {
+        scaleX: 0,
+        opacity: 0,
+        duration: 0.1,
+        ease: 'power4.in',
+        onComplete: () => {
+          setActiveGame(type);
+          setGameState('IDLE');
+          setScore(0);
+          setLevel(1);
+
+          // CRT power-on effect
+          gsap.timeline()
+            .set(screenRef.current!, { scaleX: 0, scaleY: 0.01, opacity: 0 })
+            .to(screenRef.current!, { scaleX: 1.05, opacity: 0.6, duration: 0.08 })
+            .to(screenRef.current!, { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.2, ease: 'power2.out' });
+        }
+      });
+    } else {
+      setActiveGame(type);
+      setGameState('IDLE');
+      setScore(0);
+      setLevel(1);
+      setIsPoweredOn(true);
+
+      // Initial power-on
+      if (screenRef.current) {
+        gsap.timeline()
+          .set(screenRef.current, { scaleX: 0, scaleY: 0.01, opacity: 0 })
+          .to(screenRef.current, { scaleX: 1.05, opacity: 0.6, duration: 0.08 })
+          .to(screenRef.current, { scaleX: 1, scaleY: 1, opacity: 1, duration: 0.2, ease: 'power2.out' });
+      }
+    }
   };
 
-  const gameOptions: { type: GameType; icon: string; label: string }[] = [
-    { type: 'SNAKE', icon: '🐍', label: 'Snake' },
-    { type: 'FLAPPY', icon: '🐦', label: 'Flappy' },
-    { type: 'ARTIST', icon: '🎨', label: 'Tracer' },
+  const startNewGame = () => {
+    playSound('click');
+    
+    // Pause background classical music so we can play the game's energy chiptunes
+    if (isMusicPlaying) {
+      wasMusicPlayingRef.current = true;
+      setMusicPlaying(false);
+    } else {
+      wasMusicPlayingRef.current = false;
+    }
+
+    setGameState('PLAYING');
+    setScore(0);
+    setLevel(1);
+  };
+
+  const handleGameOver = (finalScore: number) => {
+    playSound('reveal');
+    setGameState('OVER');
+    setScore(finalScore);
+    if (activeGame === 'SNAKE') saveHighScore('snake', finalScore);
+    if (activeGame === 'FLAPPY') saveHighScore('flappy', finalScore);
+    if (activeGame === 'TRACER') saveHighScore('artist', finalScore);
+
+    // Resume classical music if we paused it
+    if (wasMusicPlayingRef.current) {
+      setMusicPlaying(true);
+      wasMusicPlayingRef.current = false;
+    }
+  };
+
+  const handleScoreChange = (newScore: number) => {
+    setScore(newScore);
+  };
+
+  const GAME_CONFIGS: { type: GameType; label: string; glowColor: string; icon: React.ReactNode }[] = [
+    {
+      type: 'SNAKE',
+      label: 'Snake',
+      glowColor: '#4ADE80',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-6 h-6">
+          <path d="M4 20C4 20 4 14 8 14C12 14 12 8 16 8C20 8 20 4 20 4" />
+          <circle cx="20" cy="4" r="1.5" fill="currentColor" />
+        </svg>
+      ),
+    },
+    {
+      type: 'FLAPPY',
+      label: 'Flappy',
+      glowColor: '#F472B6',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-6 h-6">
+          <circle cx="12" cy="12" r="6" />
+          <path d="M6 12C4 10 4 8 6 7" />
+          <circle cx="14" cy="10" r="1" fill="currentColor" />
+          <path d="M18 12L21 13L18 14" fill="currentColor" stroke="none" />
+        </svg>
+      ),
+    },
+    {
+      type: 'TRACER',
+      label: 'Tracer',
+      glowColor: '#FBBF24',
+      icon: (
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" className="w-6 h-6">
+          <path d="M12 19l7-7 3 3-7 7-3-3z" />
+          <path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z" />
+          <path d="M2 2l7.586 7.586" />
+          <circle cx="11" cy="11" r="2" />
+        </svg>
+      ),
+    },
   ];
 
   return (
     <div 
-      className="min-h-screen relative flex flex-col items-center py-8 px-4 overflow-hidden crt-scanlines"
-      style={{ backgroundColor: 'var(--room-bg, #FFF0F3)', color: 'var(--room-text, #3D2030)' }}
+      className="min-h-screen relative flex flex-col items-center py-8 px-4 overflow-hidden"
+      style={{
+        background: 'radial-gradient(circle at 50% 40%, #1A1020 0%, #0D0810 50%, #060408 100%)',
+        color: '#FCE4E6',
+      }}
     >
+      {/* Floating ambient particles */}
+      <ArcadeParticles />
+
+      {/* CRT Scanline overlay (very subtle) */}
+      <div
+        className="fixed inset-0 pointer-events-none z-50"
+        style={{
+          backgroundImage: 'repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.08) 2px, rgba(0,0,0,0.08) 4px)',
+          mixBlendMode: 'multiply',
+        }}
+      />
+
+      {/* Vignette darkening at edges */}
+      <div
+        className="fixed inset-0 pointer-events-none z-40"
+        style={{
+          boxShadow: 'inset 0 0 150px rgba(0,0,0,0.7)',
+        }}
+      />
+
       {/* Header */}
-      <div className="relative z-10 w-full max-w-4xl flex items-center justify-between select-none mb-6">
+      <div className="relative z-10 w-full max-w-[80vw] flex items-center justify-between select-none mb-6">
         <button 
           onClick={handleBackToIsland}
           className="clickable flex items-center gap-2 px-4 py-2 rounded-full font-sans text-xs tracking-widest uppercase transition-all duration-300 cursor-pointer border"
           style={{ 
-            color: 'var(--room-text-muted, #9B7080)',
-            borderColor: 'var(--room-card-border, rgba(232, 143, 166, 0.2))',
+            color: 'rgba(252, 228, 230, 0.6)',
+            borderColor: 'rgba(244, 114, 182, 0.15)',
+            backgroundColor: 'rgba(18, 12, 20, 0.5)',
+            backdropFilter: 'blur(8px)',
           }}
         >
           ← Home
         </button>
 
         <h2 
-          className="font-mono text-sm font-bold tracking-wider uppercase"
-          style={{ color: 'var(--room-accent, #E88FA6)' }}
-        >
-          🕹 Retro Arcade
-        </h2>
-
-        <div className="w-[80px]" />
-      </div>
-
-      {/* Arcade Cabinet Game Selector */}
-      <div className="relative z-10 flex gap-3 mb-6">
-        {gameOptions.map(opt => (
-          <button
-            key={opt.type}
-            onClick={() => selectGame(opt.type)}
-            className={`arcade-btn ${activeGame === opt.type ? 'selected' : ''}`}
-          >
-            <span className="text-lg block mb-1">{opt.icon}</span>
-            {opt.label}
-          </button>
-        ))}
-      </div>
-
-      {/* Game Screen */}
-      <div className="relative z-10 w-full max-w-[560px]">
-        <div 
-          className="relative w-full h-[340px] rounded-2xl overflow-hidden"
-          style={{
-            border: '8px solid var(--room-card-border, rgba(232, 143, 166, 0.3))',
-            backgroundColor: '#FFF0F3',
-            boxShadow: '0 15px 40px rgba(0,0,0,0.08), inset 0 0 30px rgba(232, 143, 166, 0.05)'
+          ref={titleRef}
+          className="font-mono text-base tracking-[0.3em] uppercase font-bold"
+          style={{ 
+            color: '#F472B6',
+            textShadow: '0 0 12px rgba(244, 114, 182, 0.5), 0 0 30px rgba(244, 114, 182, 0.2)',
           }}
         >
-          {activeGame ? (
-            <>
-              <canvas 
-                ref={canvasRef} 
-                width={520} 
-                height={320} 
-                className="w-full h-full block"
-                style={{ backgroundColor: '#FFF0F3' }}
+          Retro Arcade
+        </h2>
+
+        <button
+          onClick={toggleFullscreen}
+          className="clickable flex items-center gap-2 px-4 py-2 rounded-full font-sans text-xs tracking-widest uppercase transition-all duration-300 cursor-pointer border"
+          style={{ 
+            color: 'rgba(252, 228, 230, 0.6)',
+            borderColor: 'rgba(244, 114, 182, 0.15)',
+            backgroundColor: 'rgba(18, 12, 20, 0.5)',
+            backdropFilter: 'blur(8px)',
+          }}
+        >
+          📺 Fullscreen
+        </button>
+      </div>
+
+      {/* ─── Game Select Buttons ─── */}
+      <div className="relative z-10 flex gap-4 mb-6">
+        {GAME_CONFIGS.map(cfg => {
+          const isSelected = activeGame === cfg.type;
+          return (
+            <button
+              key={cfg.type}
+              onClick={() => selectGame(cfg.type)}
+              className="clickable group relative flex flex-col items-center gap-2 px-6 py-4 rounded-2xl border transition-all duration-300 cursor-pointer select-none overflow-hidden"
+              style={{
+                backgroundColor: isSelected ? `${cfg.glowColor}11` : 'rgba(18, 12, 20, 0.7)',
+                borderColor: isSelected ? cfg.glowColor : 'rgba(255,255,255,0.06)',
+                boxShadow: isSelected
+                  ? `0 0 20px ${cfg.glowColor}33, inset 0 0 15px ${cfg.glowColor}11`
+                  : '0 4px 15px rgba(0,0,0,0.3)',
+                backdropFilter: 'blur(12px)',
+                transform: isSelected ? 'translateY(-2px)' : 'translateY(0)',
+              }}
+              onMouseEnter={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = `${cfg.glowColor}66`;
+                  e.currentTarget.style.transform = 'translateY(-3px)';
+                  e.currentTarget.style.boxShadow = `0 0 12px ${cfg.glowColor}22, 0 8px 20px rgba(0,0,0,0.4)`;
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (!isSelected) {
+                  e.currentTarget.style.borderColor = 'rgba(255,255,255,0.06)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.3)';
+                }
+              }}
+            >
+              {/* Scan sweep on hover */}
+              <div
+                className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none"
+                style={{
+                  background: `linear-gradient(90deg, transparent 0%, ${cfg.glowColor}15 50%, transparent 100%)`,
+                  animation: 'none',
+                }}
               />
+              <div style={{ color: isSelected ? cfg.glowColor : 'rgba(255,255,255,0.4)', filter: isSelected ? `drop-shadow(0 0 6px ${cfg.glowColor})` : 'none', transition: 'all 0.3s' }}>
+                {cfg.icon}
+              </div>
+              <span 
+                className="font-mono text-[10px] tracking-widest uppercase font-bold relative z-10"
+                style={{ 
+                  color: isSelected ? cfg.glowColor : 'rgba(255,255,255,0.5)',
+                  textShadow: isSelected ? `0 0 6px ${cfg.glowColor}` : 'none',
+                }}
+              >
+                {cfg.label}
+              </span>
+            </button>
+          );
+        })}
+      </div>
 
-              {gameState === 'IDLE' && (
-                <div 
-                  className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-6 select-none"
-                  style={{ backgroundColor: 'rgba(255, 240, 243, 0.95)' }}
-                >
-                  <h3 className="font-mono text-sm tracking-wider mb-2 uppercase" style={{ color: 'var(--room-text)' }}>
-                    Ready Player One
-                  </h3>
-                  <p className="font-mono text-[9px] mb-6 tracking-widest uppercase" style={{ color: 'var(--room-accent)' }}>
-                    High Score: {activeGame === 'SNAKE' ? highScores.snake : activeGame === 'FLAPPY' ? highScores.flappy : highScores.artist}
-                  </p>
-                  <button
-                    onClick={startNewGame}
-                    className="clickable px-6 py-2.5 rounded-full font-mono text-[10px] tracking-widest uppercase transition-all cursor-pointer hover:scale-105"
-                    style={{
-                      backgroundColor: 'var(--room-accent)',
-                      color: 'white',
-                      boxShadow: '0 4px 15px var(--room-accent-glow)'
-                    }}
-                  >
-                    ▶ Insert Coin
-                  </button>
-                </div>
-              )}
+      {/* ─── Play Area Screen ─── */}
+      <div className="relative z-10 w-full flex justify-center">
+        <div
+          ref={screenRef}
+          className="arcade-screen"
+          style={{
+            border: '2px solid rgba(244, 114, 182, 0.15)',
+            backgroundColor: '#0D0B0F',
+            boxShadow: `0 0 30px rgba(0,0,0,0.5), inset 0 0 40px rgba(0,0,0,0.3)${activeGame ? `, 0 0 15px ${GAME_CONFIGS.find(g => g.type === activeGame)?.glowColor}15` : ''}`,
+          }}
+        >
+          {/* Inner Aspect Container */}
+          <div className="relative w-full h-full aspect-[8/5] max-w-full max-h-full overflow-hidden flex flex-col justify-between">
+            {/* Inner screen glow gradient */}
+            <div
+              className="absolute inset-0 pointer-events-none z-0"
+              style={{
+                background: 'radial-gradient(circle at 50% 50%, rgba(244, 114, 182, 0.03) 0%, transparent 70%)',
+              }}
+            />
 
-              {gameState === 'OVER' && (
-                <div 
-                  className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-6 select-none"
-                  style={{ backgroundColor: 'rgba(255, 240, 243, 0.95)' }}
-                >
-                  <h3 className="font-mono text-lg tracking-wider mb-2 uppercase" style={{ color: '#D4756B' }}>
-                    Game Over
-                  </h3>
-                  <p className="font-mono text-xs tracking-wider mb-6 uppercase" style={{ color: 'var(--room-text)' }}>
-                    Score: {score}
-                  </p>
-                  <button
-                    onClick={startNewGame}
-                    className="clickable px-6 py-2.5 rounded-full font-mono text-[10px] tracking-widest uppercase transition-all cursor-pointer hover:scale-105"
-                    style={{
-                      backgroundColor: 'var(--room-accent)',
-                      color: 'white',
-                      boxShadow: '0 4px 15px var(--room-accent-glow)'
-                    }}
-                  >
-                    ↺ Retry
-                  </button>
-                </div>
-              )}
-            </>
-          ) : (
+          {activeGame === 'SNAKE' && (
+            <SnakeGame
+              gameState={gameState}
+              onStart={startNewGame}
+              onGameOver={handleGameOver}
+              onScoreChange={handleScoreChange}
+              highScore={highScores.snake}
+              onLevelChange={setLevel}
+            />
+          )}
+
+          {activeGame === 'FLAPPY' && (
+            <FlappyGame
+              gameState={gameState}
+              onStart={startNewGame}
+              onGameOver={handleGameOver}
+              onScoreChange={handleScoreChange}
+              highScore={highScores.flappy}
+            />
+          )}
+
+          {activeGame === 'TRACER' && (
+            <TracerGame
+              gameState={gameState}
+              onStart={startNewGame}
+              onGameOver={handleGameOver}
+              onScoreChange={handleScoreChange}
+              highScore={highScores.artist}
+            />
+          )}
+
+          {/* Empty state — no game selected */}
+          {!activeGame && (
             <div className="w-full h-full flex flex-col items-center justify-center select-none">
-              <span className="text-4xl block mb-4 animate-bounce">🕹</span>
-              <h4 className="font-mono text-[10px] tracking-widest uppercase" style={{ color: 'var(--room-text-muted)' }}>
-                Choose a game above
+              {/* Pulsing joystick icon */}
+              <div className="mb-4" style={{ animation: 'pulse 2.5s ease-in-out infinite' }}>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" className="w-10 h-10" style={{ color: 'rgba(244, 114, 182, 0.35)' }}>
+                  <rect x="6" y="14" width="12" height="6" rx="2" />
+                  <path d="M12 14V8" />
+                  <circle cx="12" cy="6" r="2" />
+                </svg>
+              </div>
+              {/* Blinking cursor prompt */}
+              <h4
+                className="font-mono text-[10px] tracking-widest uppercase"
+                style={{
+                  color: 'rgba(244, 114, 182, 0.4)',
+                  animation: 'blink-sakura-cursor 1.2s step-end infinite',
+                  borderRight: '2px solid rgba(244, 114, 182, 0.4)',
+                  paddingRight: '4px',
+                }}
+              >
+                Select a game above
               </h4>
             </div>
           )}
+          </div>
         </div>
 
-        {/* Live score */}
+        {/* Live score bar */}
         {activeGame && gameState === 'PLAYING' && (
           <div 
-            className="flex justify-between items-center mt-3 px-2 font-mono text-[10px] tracking-widest uppercase select-none"
-            style={{ color: 'var(--room-accent)' }}
+            className="flex justify-between items-center mt-3 px-3 font-mono text-[10px] tracking-widest uppercase select-none"
+            style={{ color: GAME_CONFIGS.find(g => g.type === activeGame)?.glowColor || '#F472B6' }}
           >
-            <span>Playing: {activeGame}</span>
-            <span>Score: {score}</span>
-          </div>
-        )}
-
-        {/* Artist options */}
-        {activeGame === 'ARTIST' && (
-          <div 
-            className="mt-4 p-4 rounded-xl border grid grid-cols-2 gap-4 text-left font-sans text-xs tracking-wider select-none"
-            style={{
-              backgroundColor: 'var(--room-card-bg)',
-              borderColor: 'var(--room-card-border)',
-            }}
-          >
-            <div>
-              <label className="font-semibold uppercase block mb-2 text-[10px]" style={{ color: 'var(--room-accent)' }}>Difficulty</label>
-              <div className="flex gap-2">
-                {(['normal', 'hard'] as const).map(d => (
-                  <button
-                    key={d}
-                    onClick={() => { playSound('click'); setDifficulty(d); }}
-                    className={`clickable px-3 py-1.5 rounded-full border text-[10px] font-semibold uppercase cursor-pointer transition-all`}
-                    style={{
-                      borderColor: difficulty === d ? 'var(--room-accent)' : 'var(--room-card-border)',
-                      backgroundColor: difficulty === d ? 'var(--room-accent)' : 'transparent',
-                      color: difficulty === d ? 'white' : 'var(--room-text-muted)',
-                    }}
-                  >
-                    {d}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div>
-              <label className="font-semibold uppercase block mb-2 text-[10px]" style={{ color: 'var(--room-accent)' }}>Pen Brush</label>
-              <div className="flex gap-2">
-                {(['rainbow', 'gold', 'neon'] as const).map(b => (
-                  <button
-                    key={b}
-                    onClick={() => { playSound('click'); setBrushStyle(b); }}
-                    className={`clickable px-3 py-1.5 rounded-full border text-[10px] font-semibold uppercase cursor-pointer transition-all`}
-                    style={{
-                      borderColor: brushStyle === b ? 'var(--room-accent)' : 'var(--room-card-border)',
-                      backgroundColor: brushStyle === b ? 'var(--room-accent)' : 'transparent',
-                      color: brushStyle === b ? 'white' : 'var(--room-text-muted)',
-                    }}
-                  >
-                    {b}
-                  </button>
-                ))}
-              </div>
-            </div>
+            <span style={{ textShadow: `0 0 4px ${GAME_CONFIGS.find(g => g.type === activeGame)?.glowColor}` }}>
+              Playing: {activeGame}
+            </span>
+            {activeGame === 'SNAKE' && (
+              <span style={{ textShadow: `0 0 4px ${GAME_CONFIGS.find(g => g.type === activeGame)?.glowColor}` }}>
+                Level: {level}
+              </span>
+            )}
+            <span style={{ textShadow: `0 0 4px ${GAME_CONFIGS.find(g => g.type === activeGame)?.glowColor}` }}>
+              Score: {score}{activeGame === 'TRACER' ? '%' : ''}
+            </span>
           </div>
         )}
       </div>
