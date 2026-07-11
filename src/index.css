@@ -578,6 +578,217 @@ html, body {
   background: var(--room-accent, #D4756B);
 }
 
+
+/* ═══════════════════════════════════════════
+   DEEP SPACE EHM & WARMLY STYLING
+   ═══════════════════════════════════════════ */
+
+:root {
+  --space-bg-color: #06050b;
+}
+
+/* Background container */
+.deep-space-container {
+  background-color: var(--space-bg-color);
+  background-image: radial-gradient(circle at center, transparent 20%, rgba(9, 7, 21, 0.4) 60%, rgba(5, 3, 10, 0.95) 100%);
+  color: #E3E3E3 !important;
+  transition: background-color 1.5s cubic-bezier(0.25, 1, 0.5, 1);
+  position: relative;
+}
+
+/* Glassmorphism space cards (constellations) */
+.space-card {
+  background: rgba(15, 12, 28, 0.35) !important;
+  border: 1px solid rgba(233, 200, 116, 0.12) !important;
+  backdrop-filter: blur(8px);
+  color: #E3E3E3 !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: visible;
+  transition: transform 0.3s ease, border-color 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+.space-card.visited {
+  border-color: rgba(233, 200, 116, 0.4) !important;
+  box-shadow: 0 0 20px rgba(233, 200, 116, 0.1), 0 4px 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+.space-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  border-color: rgba(233, 200, 116, 0.6) !important;
+  box-shadow: 0 0 25px rgba(233, 200, 116, 0.2), 0 8px 30px rgba(0, 0, 0, 0.6) !important;
+}
+
+/* Constellation connection dot */
+.constellation-dot {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #E9C874;
+  box-shadow: 0 0 8px #E9C874, 0 0 15px #E9C874;
+  opacity: 0.3;
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+
+.visited .constellation-dot {
+  opacity: 1;
+  transform: scale(1.3);
+  box-shadow: 0 0 12px #E9C874, 0 0 20px #E9C874;
+}
+
+/* Connective lines styling */
+.constellation-path {
+  stroke: rgba(233, 200, 116, 0.2);
+  stroke-dasharray: 8 4;
+  stroke-width: 1.5px;
+  fill: none;
+  transition: stroke-dashoffset 0.05s linear;
+}
+
+.constellation-path.active {
+  stroke: rgba(233, 200, 116, 0.6);
+  filter: drop-shadow(0 0 4px rgba(233, 200, 116, 0.5));
+}
+
+/* Mission Log HUD layout */
+.mission-log-panel {
+  background: rgba(8, 10, 20, 0.5) !important;
+  border: 1px solid rgba(0, 220, 220, 0.2) !important;
+  box-shadow: 0 0 15px rgba(0, 220, 220, 0.05) !important;
+  backdrop-filter: blur(10px);
+  position: relative;
+  overflow: hidden;
+  transition: border-color 0.4s ease, box-shadow 0.4s ease !important;
+}
+
+.mission-log-panel:hover {
+  border-color: rgba(0, 220, 220, 0.4) !important;
+  box-shadow: 0 0 25px rgba(0, 220, 220, 0.15) !important;
+}
+
+.mission-log-scanlines {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 220, 220, 0.015) 2px,
+    rgba(0, 220, 220, 0.015) 4px
+  );
+  z-index: 1;
+}
+
+/* Header back button space version */
+.space-back-btn {
+  background: rgba(255, 255, 255, 0.02) !important;
+  border-color: rgba(255, 255, 255, 0.08) !important;
+  color: #B9B9B9 !important;
+  transition: all 0.3s ease !important;
+}
+
+.space-back-btn:hover {
+  background: rgba(255, 255, 255, 0.07) !important;
+  border-color: rgba(233, 200, 116, 0.35) !important;
+  color: #E9C874 !important;
+  box-shadow: 0 0 15px rgba(233, 200, 116, 0.15);
+}
+
+/* Shimmer Sweep title text styling */
+.shimmer-text-glow {
+  background: linear-gradient(110deg, #FAF5EE 30%, #E9C874 50%, #FAF5EE 70%);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Halo Glow effect */
+.halo-glow-icon {
+  filter: drop-shadow(0 0 6px rgba(233, 200, 116, 0.45));
+}
+
+.cyan-hud-glow {
+  filter: drop-shadow(0 0 6px rgba(0, 220, 220, 0.45));
+}
+
+/* High Score glowing digits */
+.glowing-score-digit {
+  text-shadow: 0 0 8px rgba(233, 200, 116, 0.5), 0 0 15px rgba(233, 200, 116, 0.2);
+}
+
+/* ═══════════════════════════════════════════
+   CLOSING SEQUENCE VFX
+   ═══════════════════════════════════════════ */
+
+/* Ink-wash wipe — mask reveals text left-to-right */
+.closing-line-ink-wipe {
+  --ink-reveal: 0%;
+  -webkit-mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black var(--ink-reveal),
+    transparent calc(var(--ink-reveal) + 3%),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to right,
+    black 0%,
+    black var(--ink-reveal),
+    transparent calc(var(--ink-reveal) + 3%),
+    transparent 100%
+  );
+}
+
+/* Signature SVG container */
+.closing-signature-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.closing-signature-svg {
+  overflow: visible;
+  max-width: 90vw;
+}
+
+/* Star-field canvas behind "sleepless nights" */
+.closing-star-field {
+  border-radius: 4px;
+  z-index: -1;
+}
+
+/* Credit cursor blink for Writing/Code lines */
+.credit-cursor {
+  opacity: 0;
+  transition: opacity 0.1s;
+}
+
+.credit-cursor.active {
+  animation: credit-cursor-blink 0.6s step-end infinite;
+}
+
+@keyframes credit-cursor-blink {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
+/* Glitch flicker keyframe (used by GSAP but defined here as fallback) */
+@keyframes closing-glitch-flicker {
+  0% { opacity: 1; }
+  10% { opacity: 0.2; }
+  20% { opacity: 1; }
+  30% { opacity: 0.4; }
+  40% { opacity: 1; }
+  50% { opacity: 0.3; }
+  60% { opacity: 1; }
+  100% { opacity: 1; }
+}
+
 /* ═══════════════════════════════════════════
    REDUCED MOTION
    ═══════════════════════════════════════════ */
@@ -592,8 +803,22 @@ html, body {
   .breathing-circle-478,
   .ink-droplet,
   .floating-ui,
-  .floating-ui-delayed {
+  .floating-ui-delayed,
+  .closing-line-ink-wipe,
+  .credit-cursor.active {
     animation: none !important;
+  }
+
+  /* In reduced motion, remove the ink-wipe mask so text is just visible */
+  .closing-line-ink-wipe {
+    -webkit-mask-image: none !important;
+    mask-image: none !important;
+  }
+
+  /* Hide particle canvases */
+  .closing-star-field,
+  .closing-signature-svg {
+    display: none !important;
   }
 }
 

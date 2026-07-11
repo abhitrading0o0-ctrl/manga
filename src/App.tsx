@@ -11,6 +11,7 @@ import { PeaceRoom } from './components/PeaceRoom';
 import { HeartRoom } from './components/HeartRoom';
 import { GamesRoom } from './components/GamesRoom';
 import { CreditsRoom } from './components/CreditsRoom';
+import { StatsRoom } from './components/StatsRoom';
 import { FinalSurprise } from './components/FinalSurprise';
 import { GlobalParticles } from './components/GlobalParticles';
 import { CustomCursor } from './components/CustomCursor';
@@ -28,6 +29,7 @@ const VIEW_ROOM_MAP: Record<string, string | null> = {
   HEART: 'heart',
   GAMES: 'games',
   CREDITS: 'credits',
+  STATS: 'credits',
   SURPRISE: 'home',
 };
 
@@ -81,6 +83,8 @@ const AppRouter: React.FC = () => {
         return <GamesRoom />;
       case 'CREDITS':
         return <CreditsRoom />;
+      case 'STATS':
+        return <StatsRoom />;
       case 'SURPRISE':
         return <FinalSurprise />;
       default:

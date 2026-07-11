@@ -12,6 +12,7 @@ export type ViewType =
   | 'HEART' 
   | 'GAMES' 
   | 'CREDITS' 
+  | 'STATS'
   | 'SURPRISE';
 
 interface ViewContextType {

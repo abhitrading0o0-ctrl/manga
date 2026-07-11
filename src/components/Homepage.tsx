@@ -94,6 +94,22 @@ export const Homepage: React.FC = () => {
 
   const menuItems: MenuItem[] = [
     {
+      id: "games",
+      label: "Retro Arcade",
+      view: "GAMES",
+      tagline: "Retro Games",
+      accentColor: "#E88FA6",
+      sigil: <ArcadeSigil />
+    },
+    {
+      id: "heart",
+      label: "Heart Letters",
+      view: "HEART",
+      tagline: "The Message",
+      accentColor: "#D4756B",
+      sigil: <HeartSigil />
+    },
+    {
       id: "manga",
       label: "Manga",
       view: "MANGA",
@@ -110,22 +126,6 @@ export const Homepage: React.FC = () => {
       sigil: <PeaceSigil />
     },
     {
-      id: "heart",
-      label: "Heart Letters",
-      view: "HEART",
-      tagline: "The Message",
-      accentColor: "#D4756B",
-      sigil: <HeartSigil />
-    },
-    {
-      id: "games",
-      label: "Retro Arcade",
-      view: "GAMES",
-      tagline: "Retro Games",
-      accentColor: "#E88FA6",
-      sigil: <ArcadeSigil />
-    },
-    {
       id: "credits",
       label: "Credits",
       view: "CREDITS",
@@ -137,10 +137,10 @@ export const Homepage: React.FC = () => {
 
   // Helper mapping room keys to door indices
   const roomIndexMap: Record<string, number> = {
-    MANGA: 0,
-    PEACE: 1,
-    HEART: 2,
-    GAMES: 3,
+    GAMES: 0,
+    HEART: 1,
+    MANGA: 2,
+    PEACE: 3,
     CREDITS: 4
   };
 
@@ -349,9 +349,6 @@ export const Homepage: React.FC = () => {
         </h2>
         {/* Handwritten underline element */}
         <div className="w-48 h-2 bg-gradient-to-r from-transparent via-[#D4756B]/60 to-transparent rounded-full mb-2" />
-        <p className="font-sans text-[10px] tracking-[0.3em] uppercase opacity-75 text-[#B99C9F]">
-          futuristic portal corridor
-        </p>
       </div>
 
       {/* ─── Futuristic 3D Corridor Layout ─── */}
@@ -416,6 +413,15 @@ export const Homepage: React.FC = () => {
                   className={`absolute left-0 top-0 w-1/2 h-full door-panel-left`}
                   style={{
                     ...panelStyle,
+                    backgroundImage:
+                      item.id === 'games' ? "url('/assets/arcade-bg.png')" :
+                      item.id === 'heart' ? "url('/assets/heart-bg.jpg')" :
+                      item.id === 'manga' ? "url('/assets/manga-bg.jpg')" :
+                      item.id === 'peace' ? "url('/assets/peace-bg.jpg')" :
+                      item.id === 'credits' ? "url('/assets/credits-bg.png')" : undefined,
+                    backgroundSize: (item.id === 'games' || item.id === 'heart' || item.id === 'manga' || item.id === 'peace' || item.id === 'credits') ? '200% 100%' : undefined,
+                    backgroundPosition: (item.id === 'games' || item.id === 'heart' || item.id === 'manga' || item.id === 'peace' || item.id === 'credits') ? 'left center' : undefined,
+                    backgroundRepeat: (item.id === 'games' || item.id === 'heart' || item.id === 'manga' || item.id === 'peace' || item.id === 'credits') ? 'no-repeat' : undefined,
                     transform: doorsOpen[idx] ? 'rotateY(-110deg)' : 'rotateY(0deg)',
                     borderRight: '1px solid rgba(212, 117, 107, 0.3)'
                   }}
@@ -438,6 +444,15 @@ export const Homepage: React.FC = () => {
                   className={`absolute right-0 top-0 w-1/2 h-full door-panel-right`}
                   style={{
                     ...panelStyle,
+                    backgroundImage:
+                      item.id === 'games' ? "url('/assets/arcade-bg.png')" :
+                      item.id === 'heart' ? "url('/assets/heart-bg.jpg')" :
+                      item.id === 'manga' ? "url('/assets/manga-bg.jpg')" :
+                      item.id === 'peace' ? "url('/assets/peace-bg.jpg')" :
+                      item.id === 'credits' ? "url('/assets/credits-bg.png')" : undefined,
+                    backgroundSize: (item.id === 'games' || item.id === 'heart' || item.id === 'manga' || item.id === 'peace' || item.id === 'credits') ? '200% 100%' : undefined,
+                    backgroundPosition: (item.id === 'games' || item.id === 'heart' || item.id === 'manga' || item.id === 'peace' || item.id === 'credits') ? 'right center' : undefined,
+                    backgroundRepeat: (item.id === 'games' || item.id === 'heart' || item.id === 'manga' || item.id === 'peace' || item.id === 'credits') ? 'no-repeat' : undefined,
                     transform: doorsOpen[idx] ? 'rotateY(110deg)' : 'rotateY(0deg)',
                     borderLeft: '1px solid rgba(212, 117, 107, 0.3)'
                   }}

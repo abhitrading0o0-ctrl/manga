@@ -10,7 +10,18 @@ interface EnvPreset {
   name: string;
   icon: string;
   quoteList: string[];
+  frameCount: number;
 }
+
+// Helper to load image as a promise
+const loadImage = (src: string): Promise<HTMLImageElement> => {
+  return new Promise((resolve, reject) => {
+    const img = new Image();
+    img.src = src;
+    img.onload = () => resolve(img);
+    img.onerror = () => reject(new Error(`Failed to load ${src}`));
+  });
+};
 
 // Calm background gold-star particles component
 const CalmParticles: React.FC = () => {
@@ -78,21 +89,41 @@ export const PeaceRoom: React.FC = () => {
   const rotationTweenRef = useRef<gsap.core.Tween | null>(null);
   const prevTrackIndexRef = useRef<number>(currentTrackIndex);
 
+  // Background frame states
+  const [selectedTrackIndex, setSelectedTrackIndex] = useState(currentTrackIndex);
+  const [loadedFrames, setLoadedFrames] = useState<HTMLImageElement[]>([]);
+  const [prevFrames, setPrevFrames] = useState<HTMLImageElement[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [transitionProgress, setTransitionProgress] = useState(1); // 0 to 1 for visual crossfade
+  const [thumbnails, setThumbnails] = useState<Record<string, string>>({});
+
+  const backgroundCanvasRef = useRef<HTMLCanvasElement | null>(null);
+  const frameIndexRef = useRef(0);
+  const prevFrameIndexRef = useRef(0);
+
+  // Sync selected track if changed externally (e.g. from bottom controller)
+  useEffect(() => {
+    setSelectedTrackIndex(currentTrackIndex);
+  }, [currentTrackIndex]);
+
   const environments: EnvPreset[] = [
     {
-      id: 'gentle-rain',
-      name: 'Gentle Rain',
-      icon: '🌧',
+      id: 'summer',
+      name: 'Summer',
+      icon: '☀️',
+      frameCount: 30, // Change to 500 when full high-res folders are used in production
       quoteList: [
-        "Let the rain wash away all your stress and worries.",
-        "Like raindrops, remember that it's okay to fall and grow again.",
-        "Quiet moments are where the soul finds its rhythm."
+        "Sunlight is the best medicine, and the warmth is a reminder of peace.",
+        "Golden rays of sun, warm breeze, let your mind rest.",
+        "Like a long summer day, let your thoughts stretch out and relax."
       ]
     },
     {
-      id: 'ocean-waves',
-      name: 'Ocean Waves',
+      id: 'ocean',
+      name: 'Ocean',
       icon: '🌊',
+      frameCount: 30, // Change to 450 when full high-res folders are used in production
       quoteList: [
         "Your strength is as deep and infinite as the ocean.",
         "In the ebb and flow of life, find your inner calmness.",
@@ -100,23 +131,14 @@ export const PeaceRoom: React.FC = () => {
       ]
     },
     {
-      id: 'whispering-forest',
-      name: 'Whispering Forest',
-      icon: '🌿',
+      id: 'rain',
+      name: 'Rain',
+      icon: '🌧',
+      frameCount: 30, // Change to 113 when full high-res folders are used in production
       quoteList: [
-        "Like old trees, you are rooted and resilient beyond measure.",
-        "Find your calm in the whispers of the leaves.",
-        "The forest stands strong through every season — and so do you."
-      ]
-    },
-    {
-      id: 'warm-bonfire',
-      name: 'Warm Bonfire',
-      icon: '🔥',
-      quoteList: [
-        "Let the warmth remind you that you are safe right now.",
-        "Even a single spark of hope can light the darkest night.",
-        "Sit by the fire and let your thoughts soften."
+        "Let the rain wash away all your stress and worries.",
+        "Like raindrops, remember that it's okay to fall and grow again.",
+        "Quiet moments are where the soul finds its rhythm."
       ]
     }
   ];
@@ -126,14 +148,255 @@ export const PeaceRoom: React.FC = () => {
     setPeaceMode(true);
     markRoomVisited('peace');
     
+    // Initialize tonearm position off-disc
+    if (tonearmRef.current) {
+      gsap.set(tonearmRef.current, { rotation: -28 });
+    }
+
     // Entrance animation
     gsap.fromTo('.peace-content', { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: 0.8, ease: 'power3.out' });
+
+    // Load thumbnails (first frame of each folder) on mount
+    environments.forEach((env) => {
+      const src = `/peace-room/${env.id}/frames/frame_001.jpg`;
+      const img = new Image();
+      img.src = src;
+      img.onload = () => {
+        setThumbnails(prev => ({ ...prev, [env.id]: src }));
+      };
+    });
 
     return () => {
       setPeaceMode(false);
       if (breathTimerRef.current) clearInterval(breathTimerRef.current);
     };
   }, []);
+
+  // Preload selected environment frames and trigger category crossfade
+  useEffect(() => {
+    let active = true;
+
+    const loadCategoryAssets = async () => {
+      const env = environments[selectedTrackIndex];
+      if (!env) return;
+
+      setLoading(true);
+      setLoadingProgress(0);
+
+      const total = env.frameCount;
+      const imgs: HTMLImageElement[] = [];
+      let loaded = 0;
+
+      // Parallel batch loading for optimal performance
+      const promises = Array.from({ length: total }, (_, i) => {
+        const frameNum = i + 1;
+        const pad = String(frameNum).padStart(3, '0');
+        const src = `/peace-room/${env.id}/frames/frame_${pad}.jpg`;
+
+        return loadImage(src)
+          .then((img) => {
+            if (active) {
+              loaded++;
+              setLoadingProgress(Math.round((loaded / total) * 100));
+              imgs[i] = img;
+            }
+          })
+          .catch((err) => {
+            console.error(`Failed loading sequence frame: ${src}`, err);
+          });
+      });
+
+      await Promise.all(promises);
+
+      if (!active) return;
+
+      // Filter out failures to keep rendering smooth
+      const finalImgs = imgs.filter(Boolean);
+
+      if (finalImgs.length > 0) {
+        // Trigger audio transition now that assets are preloaded
+        if (isMusicPlaying) {
+          playTrack(selectedTrackIndex);
+        } else {
+          selectTrack(selectedTrackIndex);
+        }
+
+        if (loadedFrames.length > 0) {
+          // Store old frames for visual crossfade transition
+          setPrevFrames(loadedFrames);
+          setTransitionProgress(0);
+
+          // Animate crossfade progress from 0 to 1
+          gsap.to({ val: 0 }, {
+            val: 1,
+            duration: 1.0,
+            ease: 'power2.out',
+            onUpdate: function() {
+              if (active) {
+                setTransitionProgress(this.targets()[0].val);
+              }
+            },
+            onComplete: () => {
+              if (active) {
+                setPrevFrames([]);
+              }
+            }
+          });
+        }
+
+        setLoadedFrames(finalImgs);
+      }
+
+      setLoading(false);
+    };
+
+    loadCategoryAssets();
+
+    return () => {
+      active = false;
+    };
+  }, [selectedTrackIndex]);
+
+  // Looping Canvas Background Animation Loop
+  useEffect(() => {
+    const canvas = backgroundCanvasRef.current;
+    if (!canvas || loadedFrames.length === 0) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationId: number;
+    let lastTime = 0;
+
+    const totalFrames = loadedFrames.length;
+    // Ambient timing loop targeted at 5s duration, capped between 8fps and 24fps
+    const targetDuration = 5.0;
+    const fps = Math.min(24, Math.max(8, totalFrames / targetDuration));
+    const frameInterval = 1000 / fps;
+
+    const draw = (timestamp: number) => {
+      if (!lastTime) lastTime = timestamp;
+      const elapsed = timestamp - lastTime;
+
+      // Update active frames index in sync with play state
+      if (isMusicPlaying && elapsed >= frameInterval) {
+        frameIndexRef.current = (frameIndexRef.current + 1) % totalFrames;
+
+        if (prevFrames.length > 0) {
+          prevFrameIndexRef.current = (prevFrameIndexRef.current + 1) % prevFrames.length;
+        }
+
+        lastTime = timestamp - (elapsed % frameInterval);
+      }
+
+      const width = canvas.width;
+      const height = canvas.height;
+      ctx.clearRect(0, 0, width, height);
+
+      // Draw standard aspect-fill cover onto canvas
+      const drawImageCover = (img: HTMLImageElement, opacity: number) => {
+        ctx.globalAlpha = opacity;
+
+        const imgWidth = img.width;
+        const imgHeight = img.height;
+        const imgRatio = imgWidth / imgHeight;
+        const canvasRatio = width / height;
+
+        let drawWidth, drawHeight, x, y;
+
+        if (canvasRatio > imgRatio) {
+          drawWidth = width;
+          drawHeight = width / imgRatio;
+          x = 0;
+          y = (height - drawHeight) / 2;
+        } else {
+          drawWidth = height * imgRatio;
+          drawHeight = height;
+          x = (width - drawWidth) / 2;
+          y = 0;
+        }
+
+        ctx.drawImage(img, x, y, drawWidth, drawHeight);
+      };
+
+      // Seamless loop crossfader helper
+      const getLoopedFrameInfo = (framesList: HTMLImageElement[], baseIndex: number) => {
+        const len = framesList.length;
+        if (len === 0) return null;
+
+        // Crossfade loop boundaries over the last 15% of frames to eliminate jumps
+        const fadeLength = Math.min(10, Math.floor(len * 0.15));
+        const idx = baseIndex % len;
+
+        if (idx >= len - fadeLength) {
+          const fadeRatio = (idx - (len - fadeLength)) / fadeLength;
+          const frameA = framesList[idx];
+          const frameB = framesList[idx - (len - fadeLength)];
+          return { frameA, frameB, fadeRatio };
+        }
+
+        return { frameA: framesList[idx], frameB: null, fadeRatio: 0 };
+      };
+
+      // Draw background layers with interpolations
+      if (prevFrames.length > 0 && transitionProgress < 1) {
+        // Draw previous scene fading out
+        const prevInfo = getLoopedFrameInfo(prevFrames, prevFrameIndexRef.current);
+        if (prevInfo && prevInfo.frameA) {
+          if (prevInfo.frameB) {
+            drawImageCover(prevInfo.frameA, (1 - prevInfo.fadeRatio) * (1 - transitionProgress));
+            drawImageCover(prevInfo.frameB, prevInfo.fadeRatio * (1 - transitionProgress));
+          } else {
+            drawImageCover(prevInfo.frameA, 1 - transitionProgress);
+          }
+        }
+
+        // Draw incoming scene fading in
+        const currentInfo = getLoopedFrameInfo(loadedFrames, frameIndexRef.current);
+        if (currentInfo && currentInfo.frameA) {
+          if (currentInfo.frameB) {
+            drawImageCover(currentInfo.frameA, (1 - currentInfo.fadeRatio) * transitionProgress);
+            drawImageCover(currentInfo.frameB, currentInfo.fadeRatio * transitionProgress);
+          } else {
+            drawImageCover(currentInfo.frameA, transitionProgress);
+          }
+        }
+      } else {
+        // Draw only active scene with loops
+        const currentInfo = getLoopedFrameInfo(loadedFrames, frameIndexRef.current);
+        if (currentInfo && currentInfo.frameA) {
+          if (currentInfo.frameB) {
+            drawImageCover(currentInfo.frameA, 1 - currentInfo.fadeRatio);
+            drawImageCover(currentInfo.frameB, currentInfo.fadeRatio);
+          } else {
+            drawImageCover(currentInfo.frameA, 1.0);
+          }
+        }
+      }
+
+      animationId = requestAnimationFrame(draw);
+    };
+
+    // Keep size calibrated to pixel ratios
+    const resizeCanvas = () => {
+      const dpr = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * dpr;
+      canvas.height = window.innerHeight * dpr;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      ctx.setTransform(1, 0, 0, 1, 0, 0);
+      ctx.scale(dpr, dpr);
+    };
+
+    resizeCanvas();
+    window.addEventListener('resize', resizeCanvas);
+
+    animationId = requestAnimationFrame(draw);
+
+    return () => {
+      cancelAnimationFrame(animationId);
+      window.removeEventListener('resize', resizeCanvas);
+    };
+  }, [loadedFrames, prevFrames, transitionProgress, isMusicPlaying, currentTrackIndex]);
 
   // Sync breathing label updates with GSAP fade-out -> swap text -> fade-in animation
   useEffect(() => {
@@ -145,7 +408,6 @@ export const PeaceRoom: React.FC = () => {
       scale: 0.96,
       filter: 'blur(5px)',
       duration: 0.45,
-      ease: 'power2.in',
       onComplete: () => {
         setDisplayText(breathLabel);
       }
@@ -268,13 +530,34 @@ export const PeaceRoom: React.FC = () => {
         tl.to(tonearmRef.current, {
           rotation: -28, // lift up
           duration: 0.4,
-          ease: 'power2.out'
+          ease: 'power2.out',
+          onStart: () => {
+            // Slow down the disc spinning
+            if (rotationTweenRef.current) {
+              gsap.to(rotationTweenRef.current, {
+                timeScale: 0,
+                duration: 0.4,
+                ease: 'power2.out'
+              });
+            }
+          }
         })
         .to(tonearmRef.current, {
           rotation: 12, // place back down
           duration: 0.6,
           ease: 'power2.out',
-          delay: 0.1
+          delay: 0.1,
+          onStart: () => {
+            // Restart/accelerate disc spinning again
+            if (rotationTweenRef.current) {
+              rotationTweenRef.current.play();
+              gsap.to(rotationTweenRef.current, {
+                timeScale: 1,
+                duration: 0.6,
+                ease: 'power1.in'
+              });
+            }
+          }
         });
       }
     }
@@ -294,12 +577,9 @@ export const PeaceRoom: React.FC = () => {
   };
 
   const handleEnvChange = (index: number) => {
+    if (loading) return; // Prevent clicking another card while one is loading
     playSound('click');
-    if (isMusicPlaying) {
-      playTrack(index);
-    } else {
-      selectTrack(index);
-    }
+    setSelectedTrackIndex(index);
   };
 
   const handleBackToIsland = () => {
@@ -309,16 +589,21 @@ export const PeaceRoom: React.FC = () => {
 
   const renderIcon = (id: string, className?: string) => {
     switch (id) {
-      case 'gentle-rain':
+      case 'summer':
         return (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
-            <path d="M16 14v6" />
-            <path d="M8 14v6" />
-            <path d="M12 16v6" />
+            <circle cx="12" cy="12" r="4" />
+            <path d="M12 2v2" />
+            <path d="M12 20v2" />
+            <path d="M4.93 4.93l1.41 1.41" />
+            <path d="M17.66 17.66l1.41 1.41" />
+            <path d="M2 12h2" />
+            <path d="M20 12h2" />
+            <path d="M6.34 17.66l-1.41 1.41" />
+            <path d="M19.07 4.93l-1.41 1.41" />
           </svg>
         );
-      case 'ocean-waves':
+      case 'ocean':
         return (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
             <path d="M2 6c.6.5 1.2 1 2.5 1s2.5-.5 3-.5 1.2.5 2.5.5 2.5-.5 3-.5 1.2.5 2.5.5 2.5-.5 3-.5 1.2.5 2.5.5 1.9-.5 2.5-1" />
@@ -326,17 +611,13 @@ export const PeaceRoom: React.FC = () => {
             <path d="M2 18c.6.5 1.2 1 2.5 1s2.5-.5 3-.5 1.2.5 2.5.5 2.5-.5 3-.5 1.2.5 2.5.5 2.5-.5 3-.5 1.2.5 2.5.5 1.9-.5 2.5-1" />
           </svg>
         );
-      case 'whispering-forest':
+      case 'rain':
         return (
           <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 3.58 1 9.3a7 7 0 0 1-14 3.7" />
-            <path d="M19 2c-4 4-7.5 5.5-12 12" />
-          </svg>
-        );
-      case 'warm-bonfire':
-        return (
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" className={className}>
-            <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z" />
+            <path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242" />
+            <path d="M16 14v6" />
+            <path d="M8 14v6" />
+            <path d="M12 16v6" />
           </svg>
         );
       default:
@@ -351,11 +632,14 @@ export const PeaceRoom: React.FC = () => {
       onMouseMove={handleMouseMove}
       onMouseLeave={handleMouseLeave}
       className="min-h-screen relative flex flex-col items-center justify-center px-6 overflow-hidden transition-all duration-700 select-none"
-      style={{
-        background: 'linear-gradient(135deg, #1C1926 0%, #0E0C12 50%, #060508 100%)',
-      }}
     >
-      {/* Calm Ambient Floating Background Gold-Star Particles */}
+      {/* Dynamic Loop Animated Canvas Background */}
+      <div className="absolute inset-0 overflow-hidden pointer-events-none -z-30 bg-[#050608]">
+        <canvas ref={backgroundCanvasRef} className="w-full h-full object-cover" />
+        <div className="absolute inset-0 bg-black/45" /> {/* Scrim for card contrast */}
+      </div>
+
+      {/* Star Particles drift in front of the background for rich parallax depth */}
       <CalmParticles />
 
       {/* Cinematic peach-gold backdrop glow behind the disc player */}
@@ -368,6 +652,8 @@ export const PeaceRoom: React.FC = () => {
           transform: `translate(calc(-50% + ${mousePos.x * 25}px), calc(-50% + ${mousePos.y * 25}px))`,
         }}
       />
+
+
 
       {/* Header */}
       <div className="fixed top-6 left-6 z-20">
@@ -558,7 +844,6 @@ export const PeaceRoom: React.FC = () => {
                 top: '35px',
                 right: '25px',
                 transformOrigin: '95px 10px',
-                transform: 'rotate(-28deg)',
                 filter: 'drop-shadow(-4px 8px 6px rgba(0,0,0,0.65))',
               }}
             >
@@ -608,43 +893,66 @@ export const PeaceRoom: React.FC = () => {
           </p>
         </div>
 
-        {/* Sleek record sleeve track tabs */}
-        <div className="grid grid-cols-2 gap-3.5 w-full px-4 mt-2">
+        {/* Sleek record sleeve track tabs - restructured into 3 premium cards */}
+        <div className="grid grid-cols-3 gap-4 w-full px-4 mt-2">
           {environments.map((env, index) => {
-            const isActive = currentTrackIndex === index;
+            const isActive = selectedTrackIndex === index;
+            const isActualPlaying = currentTrackIndex === index;
+            const thumbnailSrc = thumbnails[env.id];
+            const isLoadingThis = loading && selectedTrackIndex === index;
+            
             return (
               <button
                 key={env.id}
                 onClick={() => handleEnvChange(index)}
-                className="clickable relative flex items-center justify-between w-full h-16 p-3 rounded-xl border transition-all duration-300 overflow-hidden cursor-pointer hover:-translate-y-0.5"
+                className="clickable relative flex flex-col items-center justify-center w-full h-24 p-3 rounded-2xl border transition-all duration-500 overflow-hidden cursor-pointer hover:-translate-y-1 group active:scale-[0.98]"
                 style={{
                   color: isActive ? '#E6C280' : '#FFF9E6',
-                  borderColor: isActive ? 'rgba(230, 194, 128, 0.4)' : 'rgba(230, 194, 128, 0.12)',
-                  backgroundColor: isActive ? 'rgba(230, 194, 128, 0.08)' : 'rgba(18, 15, 24, 0.65)',
-                  boxShadow: isActive ? '0 0 15px rgba(230, 194, 128, 0.2)' : 'none',
+                  borderColor: isActive ? 'rgba(230, 194, 128, 0.45)' : 'rgba(230, 194, 128, 0.12)',
+                  backgroundColor: isActive ? 'rgba(18, 15, 24, 0.8)' : 'rgba(18, 15, 24, 0.45)',
+                  boxShadow: isActive ? '0 0 20px rgba(230, 194, 128, 0.25)' : 'none',
                   backdropFilter: 'blur(8px)',
                 }}
               >
-                {/* Peeking dark record sliver */}
+                {/* Background image preview with zoom effect */}
+                {thumbnailSrc && (
+                  <div 
+                    className="absolute inset-0 bg-cover bg-center opacity-25 group-hover:opacity-40 group-hover:scale-110 transition-all duration-700 -z-10"
+                    style={{ backgroundImage: `url('${thumbnailSrc}')` }}
+                  />
+                )}
+                
+                {/* Vignette overlay inside card */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/40 to-transparent -z-10" />
+
+                {/* Bottom line indicator */}
                 <div 
-                  className="absolute right-0 top-0 bottom-0 w-8 border-l border-white/5 transition-transform duration-500 ease-out"
+                  className="absolute right-0 left-0 bottom-0 h-1 bg-gradient-to-r from-transparent via-[#E6C280]/60 to-transparent transition-transform duration-500 ease-out"
                   style={{
-                    borderRadius: '0 12px 12px 0',
-                    transform: isActive ? 'translateX(0)' : 'translateX(12px)',
-                    opacity: isActive ? 0.45 : 0.12,
-                    background: 'repeating-radial-gradient(circle at right, #000, #000 2px, #231F30 4px)',
+                    transform: isActualPlaying ? 'scaleX(1)' : 'scaleX(0)',
+                    opacity: isActualPlaying ? 1 : 0,
                   }}
                 />
 
-                {/* Left side content inside sleeve */}
-                <div className="flex items-center gap-3.5 z-10 text-left">
-                  <div className={`p-1.5 rounded-lg transition-colors duration-300 ${isActive ? 'bg-[#E6C280]/20 text-[#E6C280]' : 'bg-[#FFF9E6]/10 text-[#FFF9E6]/60'}`}>
-                    {renderIcon(env.id, "w-4.5 h-4.5")}
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="text-[8px] font-bold uppercase tracking-widest opacity-50">Sleeve {index + 1}</span>
-                    <span className="text-xs font-bold leading-tight mt-0.5" style={{ opacity: isActive ? 1 : 0.85 }}>{env.name}</span>
-                  </div>
+                {/* Content */}
+                <div className="flex flex-col items-center gap-1.5 text-center z-10">
+                  {isLoadingThis ? (
+                    <div className="flex flex-col items-center justify-center min-h-[44px]">
+                      {/* Tiny elegant loader */}
+                      <div className="w-5 h-5 border-2 border-[#E6C280] border-t-transparent rounded-full animate-spin mb-1" />
+                      <span className="text-[9px] font-sans text-[#E6C280] font-bold tracking-wider">{loadingProgress}%</span>
+                    </div>
+                  ) : (
+                    <>
+                      <div className={`transition-transform duration-300 group-hover:scale-110 ${isActive ? 'text-[#E6C280]' : 'text-[#FFF9E6]/60'}`}>
+                        {renderIcon(env.id, "w-6 h-6 filter drop-shadow-[0_0_2px_rgba(255,255,255,0.15)]")}
+                      </div>
+                      <div className="flex flex-col">
+                        <span className="text-[7px] font-bold uppercase tracking-widest opacity-40">Category 0{index + 1}</span>
+                        <span className="text-xs font-bold leading-tight mt-0.5 tracking-wider" style={{ opacity: isActive ? 1 : 0.85 }}>{env.name}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
               </button>
             );

@@ -47,36 +47,28 @@ const AMBIENT_TRACKS = [
 
 const PEACE_TRACKS = [
   {
-    id: 'gentle-rain',
-    label: 'Gentle Rain',
-    title: 'Gentle Rain',
-    icon: 'cloud-rain',
-    file: '/audio/peace-room/gentle-rain.mp3',
-    url: '/audio/peace-room/gentle-rain.mp3',
+    id: 'summer',
+    label: 'Summer',
+    title: 'Summer',
+    icon: 'sun',
+    file: '/peace-room/summer/audio.webm',
+    url: '/peace-room/summer/audio.webm',
   },
   {
-    id: 'ocean-waves',
-    label: 'Ocean Waves',
-    title: 'Ocean Waves',
+    id: 'ocean',
+    label: 'Ocean',
+    title: 'Ocean',
     icon: 'waves',
-    file: '/audio/peace-room/ocean-waves.mp3',
-    url: '/audio/peace-room/ocean-waves.mp3',
+    file: '/peace-room/ocean/audio.webm',
+    url: '/peace-room/ocean/audio.webm',
   },
   {
-    id: 'whispering-forest',
-    label: 'Whispering Forest',
-    title: 'Whispering Forest',
-    icon: 'leaf',
-    file: '/audio/peace-room/whispering-forest.mp3',
-    url: '/audio/peace-room/whispering-forest.mp3',
-  },
-  {
-    id: 'warm-bonfire',
-    label: 'Warm Bonfire',
-    title: 'Warm Bonfire',
-    icon: 'flame',
-    file: '/audio/peace-room/warm-bonfire.mp3',
-    url: '/audio/peace-room/warm-bonfire.mp3',
+    id: 'rain',
+    label: 'Rain',
+    title: 'Rain',
+    icon: 'cloud-rain',
+    file: '/peace-room/rain/audio.webm',
+    url: '/peace-room/rain/audio.webm',
   }
 ];
 
@@ -100,6 +92,19 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
     currentTrackIndexRef.current = currentTrackIndex;
   }, [currentTrackIndex]);
 
+  // Keep a ref of play state for cleanup function access
+  const isMusicPlayingRef = useRef(isMusicPlaying);
+  useEffect(() => {
+    isMusicPlayingRef.current = isMusicPlaying;
+  }, [isMusicPlaying]);
+
+  const isUnmountingRef = useRef(false);
+  useEffect(() => {
+    return () => {
+      isUnmountingRef.current = true;
+    };
+  }, []);
+
   // Web Audio Context for synthesizer
   const audioCtxRef = useRef<AudioContext | null>(null);
   const synthIntervalRef = useRef<number | null>(null);
@@ -111,6 +116,7 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   
   // Howler instances
   const trackHowlRef = useRef<Howl | null>(null);
+  const nativeAudioRef = useRef<HTMLAudioElement | null>(null);
 
   // Initialize Audio Context on user action
   const initAudioCtx = () => {
@@ -126,66 +132,140 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (trackHowlRef.current) {
       trackHowlRef.current.unload();
+      trackHowlRef.current = null;
+    }
+    if (nativeAudioRef.current) {
+      nativeAudioRef.current.pause();
+      nativeAudioRef.current = null;
     }
     stopProceduralSynth();
     setIsMusicPlaying(false);
     setCurrentTrackIndex(0);
   }, [isPeaceMode]);
 
-  // Set up Howler background track
+  // Set up background track (Howler for ambient, native Audio element for Peace Mode WebM soundscapes)
   useEffect(() => {
     if (isMusicPlaying) {
-      // If we fail to load track, we will run the synth piano automatically!
-      if (trackHowlRef.current) {
-        trackHowlRef.current.unload();
-      }
-
       const currentTrack = tracks[currentTrackIndex];
-      const srcUrls = [currentTrack.url];
-      if ('fallbackUrl' in currentTrack && currentTrack.fallbackUrl) {
-        srcUrls.push(currentTrack.fallbackUrl);
-      }
+      if (!currentTrack) return;
 
-      const howl = new Howl({
-        src: srcUrls,
-        html5: false,
-        loop: true,
-        volume: volume,
-        onloaderror: () => {
-          if (isPeaceMode) {
-            console.warn("Howler load error in peace mode:", currentTrack.title);
-            return;
-          }
-          console.warn("Howler load error, triggering Web Audio Procedural Synth fallback!");
-          startProceduralSynth();
-        },
-        onplayerror: () => {
-          if (isPeaceMode) {
-            console.warn("Howler play error in peace mode:", currentTrack.title);
-            return;
-          }
-          console.warn("Howler play error, triggering Web Audio Procedural Synth fallback!");
-          startProceduralSynth();
+      if (isPeaceMode) {
+        // Stop Howler if playing
+        if (trackHowlRef.current) {
+          trackHowlRef.current.unload();
+          trackHowlRef.current = null;
         }
-      });
 
-      trackHowlRef.current = howl;
-      howl.play();
-      
-      // Stop procedural synth if it was running
-      stopProceduralSynth();
+        const targetSrc = window.location.origin + currentTrack.url;
+        
+        if (!nativeAudioRef.current || nativeAudioRef.current.src !== targetSrc) {
+          const oldAudio = nativeAudioRef.current;
+          
+          const newAudio = new Audio(currentTrack.url);
+          newAudio.loop = true;
+          newAudio.volume = oldAudio ? 0 : volume;
+          
+          nativeAudioRef.current = newAudio;
+          newAudio.play().catch(err => console.warn("Native audio play failed:", err));
+
+          if (oldAudio) {
+            // Smooth 1s crossfade between native Audio elements
+            const CROSSFADE_TIME = 1000;
+            const steps = 20;
+            const stepTime = CROSSFADE_TIME / steps;
+            let currentStep = 0;
+            const oldVol = oldAudio.volume;
+
+            const fadeInterval = setInterval(() => {
+              currentStep++;
+              const progress = currentStep / steps;
+
+              oldAudio.volume = Math.max(0, oldVol * (1 - progress));
+              newAudio.volume = Math.min(volumeRef.current, volumeRef.current * progress);
+
+              if (currentStep >= steps) {
+                clearInterval(fadeInterval);
+                oldAudio.pause();
+              }
+            }, stepTime);
+          }
+        } else {
+          nativeAudioRef.current.volume = volume;
+          nativeAudioRef.current.play().catch(err => console.warn("Native audio play failed:", err));
+        }
+
+        stopProceduralSynth();
+      } else {
+        // Stop native audio if active
+        if (nativeAudioRef.current) {
+          nativeAudioRef.current.pause();
+          nativeAudioRef.current = null;
+        }
+
+        const srcUrls = [currentTrack.url];
+        if ('fallbackUrl' in currentTrack && currentTrack.fallbackUrl) {
+          srcUrls.push(currentTrack.fallbackUrl);
+        }
+
+        const oldHowl = trackHowlRef.current;
+        const shouldCrossfade = !!oldHowl;
+
+        const howl = new Howl({
+          src: srcUrls,
+          html5: false,
+          loop: true,
+          volume: shouldCrossfade ? 0 : volume,
+          onloaderror: () => {
+            console.warn("Howler load error, triggering Web Audio Procedural Synth fallback!");
+            startProceduralSynth();
+          },
+          onplayerror: () => {
+            console.warn("Howler play error, triggering Web Audio Procedural Synth fallback!");
+            startProceduralSynth();
+          }
+        });
+
+        trackHowlRef.current = howl;
+        howl.play();
+
+        if (shouldCrossfade) {
+          const CROSSFADE_TIME = 1000;
+          oldHowl.fade(oldHowl.volume(), 0, CROSSFADE_TIME);
+          oldHowl.once('fade', () => {
+            oldHowl.unload();
+          });
+          howl.fade(0, volume, CROSSFADE_TIME);
+        } else {
+          if (oldHowl) {
+            oldHowl.unload();
+          }
+        }
+
+        stopProceduralSynth();
+      }
     } else {
       if (trackHowlRef.current) {
         trackHowlRef.current.pause();
+      }
+      if (nativeAudioRef.current) {
+        nativeAudioRef.current.pause();
       }
       stopProceduralSynth();
     }
 
     return () => {
-      if (trackHowlRef.current) {
-        trackHowlRef.current.unload();
+      // Unload only if we are unmounting or if music has been paused.
+      if (isUnmountingRef.current || !isMusicPlayingRef.current) {
+        if (trackHowlRef.current) {
+          trackHowlRef.current.unload();
+          trackHowlRef.current = null;
+        }
+        if (nativeAudioRef.current) {
+          nativeAudioRef.current.pause();
+          nativeAudioRef.current = null;
+        }
+        stopProceduralSynth();
       }
-      stopProceduralSynth();
     };
   }, [isMusicPlaying, currentTrackIndex]);
 
@@ -193,6 +273,9 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
   useEffect(() => {
     if (trackHowlRef.current) {
       trackHowlRef.current.volume(volume);
+    }
+    if (nativeAudioRef.current) {
+      nativeAudioRef.current.volume = volume;
     }
   }, [volume]);
 
