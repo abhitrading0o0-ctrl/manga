@@ -48,7 +48,7 @@ const revealGradientStyle: React.CSSProperties = {
 };
 
 // Interactive, smooth Breathing Guide System component (Lovely style, Tap & Hold)
-const BreathingSystem: React.FC<{ containerRef: React.RefObject<HTMLDivElement> }> = ({ containerRef }) => {
+const BreathingSystem: React.FC<{ containerRef: React.RefObject<HTMLDivElement | null> }> = ({ containerRef }) => {
   const [isHolding, setIsHolding] = useState(false);
   const circleRef = useRef<HTMLDivElement>(null);
   const [timerText, setTimerText] = useState('Tap & hold');
@@ -162,7 +162,7 @@ export const ClosingSequence: React.FC = () => {
   const line4NightsRef = useRef<HTMLSpanElement>(null);
 
   // Track played state for lazy observer triggering
-  const [hasPlayed, setHasPlayed] = useState<Record<number, boolean>>({});
+
 
   // Canvas drawing references
   const shootingStar = useRef<{

@@ -461,11 +461,7 @@ export const FinalSurprise: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [currentIndex, isPlaying, phase]);
 
-  // 7. Last Surprise redirect logic
-  const handleLastSurprise = () => {
-    playSound('click');
-    alert("🎁 One Last Surprise:\n\nThis button can be customized to play a secret recording, trigger a photo album, or redirect to a customized video URL!");
-  };
+
 
   return (
     <div className="fixed inset-0 bg-[#050608] z-50 flex flex-col items-center justify-center select-none overflow-hidden">
