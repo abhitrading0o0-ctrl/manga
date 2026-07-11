@@ -236,15 +236,13 @@ export const AudioProvider: React.FC<{ children: React.ReactNode }> = ({ childre
         trackHowlRef.current = howl;
         howl.play();
 
-        if (shouldCrossfade) {
+        if (oldHowl) {
           const CROSSFADE_TIME = 1000;
           oldHowl.fade(oldHowl.volume(), 0, CROSSFADE_TIME);
           oldHowl.once('fade', () => {
             oldHowl.unload();
           });
           howl.fade(0, volume, CROSSFADE_TIME);
-        } else {
-          (oldHowl as unknown as Howl).unload();
         }
 
         stopProceduralSynth();
