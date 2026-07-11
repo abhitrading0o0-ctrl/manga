@@ -635,101 +635,206 @@ export const TracerGame: React.FC<TracerGameProps> = ({ onGameOver, onScoreChang
         style={{ backgroundColor: '#0A0E1A', cursor: gameState === 'PLAYING' ? 'none' : 'default' }}
       />
 
+      {/* IDLE overlay */}
       {gameState === 'IDLE' && (
-        <div className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-5 select-none" style={{ backgroundColor: 'rgba(10,14,26,0.96)' }}>
-          <div className="mb-1 font-mono text-xs tracking-widest uppercase" style={{ color: levelDef.guideColor, textShadow: '0 0 12px ' + levelDef.guideColor }}>
-            Tracer
-          </div>
-          <div className="font-mono text-[8px] mb-4 tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.35)' }}>
-            Follow the moving dot · Build your line control
-          </div>
-
-          <div className="flex gap-2 mb-4 flex-wrap justify-center">
-            {LEVEL_DEFS.map((lv, i) => (
-              <button key={lv.number} onClick={() => setSelectedLevel(i)}
-                className="clickable px-3 py-2 rounded-xl font-mono text-[7px] tracking-wider uppercase border transition-all cursor-pointer text-left"
-                style={{ borderColor: selectedLevel === i ? lv.guideColor : 'rgba(255,255,255,0.08)', backgroundColor: selectedLevel === i ? lv.guideColor + '18' : 'rgba(255,255,255,0.03)', color: selectedLevel === i ? lv.guideColor : 'rgba(255,255,255,0.35)', boxShadow: selectedLevel === i ? '0 0 10px ' + lv.guideGlow : 'none', minWidth: '100px' }}>
-                <div className="font-bold mb-0.5">Lvl {lv.number}: {lv.name}</div>
-                <div style={{ color: 'rgba(255,255,255,0.4)', fontSize: '6px' }}>{lv.description}</div>
-              </button>
-            ))}
-          </div>
-
-          <div className="flex gap-1.5 mb-4">
-            {TOOLS.map(t => (
-              <button key={t.id} onClick={() => setSelectedTool(t.id)}
-                className="clickable px-2.5 py-1.5 rounded-lg font-mono text-[7px] tracking-wider uppercase border transition-all cursor-pointer"
-                style={{ borderColor: selectedTool === t.id ? '#FFFFFF' : 'rgba(255,255,255,0.08)', backgroundColor: selectedTool === t.id ? 'rgba(255,255,255,0.12)' : 'rgba(255,255,255,0.02)', color: selectedTool === t.id ? '#FFF' : 'rgba(255,255,255,0.35)' }}>
-                {t.name}
-              </button>
-            ))}
-          </div>
-
-          <div className="flex items-center gap-2 mb-4">
-            <button onClick={() => setShowPathPreview(!showPathPreview)}
-              className="clickable px-3 py-1.5 rounded-lg font-mono text-[7px] tracking-wider uppercase border transition-all cursor-pointer flex items-center gap-1.5"
-              style={{
-                borderColor: showPathPreview ? levelDef.guideColor : 'rgba(255,255,255,0.08)',
-                backgroundColor: showPathPreview ? levelDef.guideColor + '12' : 'rgba(255,255,255,0.02)',
-                color: showPathPreview ? levelDef.guideColor : 'rgba(255,255,255,0.35)',
-                boxShadow: showPathPreview ? '0 0 6px ' + levelDef.guideGlow : 'none',
+        <div 
+          className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-5 select-none animate-fade-in" 
+          style={{ backgroundColor: 'rgba(10, 14, 26, 0.94)', backdropFilter: 'blur(8px)' }}
+        >
+          <div className="w-full max-w-[420px] p-6 bg-[#0f1322]/90 border border-white/10 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col items-center">
+            {/* Header Icon */}
+            <div 
+              className="w-11 h-11 rounded-xl flex items-center justify-center text-xl mb-3.5 bg-white/5 border border-white/10 transition-all duration-300"
+              style={{ 
+                boxShadow: `0 0 20px ${levelDef.guideColor}15`,
+                borderColor: `${levelDef.guideColor}30`
               }}
             >
-              <span>Preview Guide Path:</span>
-              <span className="font-bold">{showPathPreview ? 'ON' : 'OFF'}</span>
+              ✍️
+            </div>
+
+            {/* Game Name */}
+            <h3 
+              className="font-mono text-sm tracking-[0.25em] font-bold mb-1 uppercase" 
+              style={{ color: levelDef.guideColor, textShadow: `0 0 10px ${levelDef.guideColor}60` }}
+            >
+              Tracer
+            </h3>
+            
+            {/* Short Tagline */}
+            <p className="font-mono text-[8px] mb-5 tracking-widest uppercase text-white/40">
+              Follow the moving dot · Build line precision
+            </p>
+
+            {/* Level Selector 2x2 Grid */}
+            <div className="w-full grid grid-cols-2 gap-2 mb-4">
+              {LEVEL_DEFS.map((lv, i) => {
+                const isSelected = selectedLevel === i;
+                return (
+                  <button 
+                    key={lv.number} 
+                    onClick={() => setSelectedLevel(i)}
+                    className="clickable p-3 rounded-xl border font-mono text-[8px] tracking-wide text-left transition-all duration-200 cursor-pointer w-full flex flex-col justify-between"
+                    style={{ 
+                      borderColor: isSelected ? lv.guideColor : 'rgba(255,255,255,0.06)', 
+                      backgroundColor: isSelected ? `${lv.guideColor}12` : 'rgba(255,255,255,0.02)', 
+                      color: isSelected ? lv.guideColor : 'rgba(255,255,255,0.4)', 
+                      boxShadow: isSelected ? `0 0 12px ${lv.guideGlow}30` : 'none',
+                      minHeight: '52px'
+                    }}
+                  >
+                    <span className="font-bold uppercase tracking-wider block mb-0.5">Lvl {lv.number}: {lv.name}</span>
+                    <span className="text-[6.5px] lowercase text-white/35 leading-tight block truncate w-full">{lv.description.replace(' — ', ' ')}</span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Brush Tool Selector */}
+            <div className="w-full flex justify-between p-1 bg-white/5 border border-white/5 rounded-xl gap-1 mb-4">
+              {TOOLS.map(t => {
+                const isSelected = selectedTool === t.id;
+                return (
+                  <button 
+                    key={t.id} 
+                    onClick={() => setSelectedTool(t.id)}
+                    className="clickable flex-1 py-2 rounded-lg font-mono text-[8px] tracking-wider uppercase border transition-all duration-200 cursor-pointer"
+                    style={{ 
+                      borderColor: isSelected ? 'rgba(255,255,255,0.15)' : 'transparent', 
+                      backgroundColor: isSelected ? 'rgba(255,255,255,0.08)' : 'transparent', 
+                      color: isSelected ? '#FFF' : 'rgba(255,255,255,0.4)',
+                      boxShadow: isSelected ? '0 2px 6px rgba(0,0,0,0.15)' : 'none'
+                    }}
+                  >
+                    {t.name.split(' ')[0]}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Option and Score Stats Grid */}
+            <div className="w-full grid grid-cols-2 gap-2 mb-5">
+              {/* Preview Toggle */}
+              <button 
+                onClick={() => setShowPathPreview(!showPathPreview)}
+                className="clickable py-2 px-3 rounded-xl font-mono text-[8.5px] tracking-wider uppercase border transition-all duration-200 cursor-pointer flex items-center justify-between"
+                style={{
+                  borderColor: showPathPreview ? levelDef.guideColor : 'rgba(255,255,255,0.06)',
+                  backgroundColor: showPathPreview ? `${levelDef.guideColor}0c` : 'rgba(255,255,255,0.02)',
+                  color: showPathPreview ? levelDef.guideColor : 'rgba(255,255,255,0.4)',
+                }}
+              >
+                <span>Guide Path:</span>
+                <span className="font-bold">{showPathPreview ? 'ON' : 'OFF'}</span>
+              </button>
+
+              {/* Best Score Badge */}
+              <div className="py-2 px-3 rounded-xl bg-white/2 border border-white/6 font-mono text-[8.5px] tracking-wider flex items-center justify-between text-white/40">
+                <span className="uppercase text-left">Best Score:</span>
+                <span className="font-bold text-right" style={{ color: levelDef.guideColor, textShadow: `0 0 8px ${levelDef.guideColor}40` }}>{highScore}%</span>
+              </div>
+
+              {/* Score History Span (Full Width) */}
+              {scoreHistory.length > 0 && (
+                <div className="col-span-2 py-2 px-3.5 rounded-xl bg-white/2 border border-white/6 font-mono text-[8px] tracking-wider flex items-center justify-between text-white/40">
+                  <span className="uppercase">Recent Runs:</span>
+                  <div className="flex gap-2">
+                    {scoreHistory.slice(-5).map((s, i) => (
+                      <span key={i} className="font-bold" style={{ color: s >= 82 ? '#4ADE80' : s >= 65 ? '#FBBF24' : '#F472B6' }}>{s}%</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action CTA Button */}
+            <button 
+              onClick={onStart} 
+              className="clickable w-full py-3 text-bg font-mono font-bold text-[9.5px] tracking-[0.2em] uppercase rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              style={{ 
+                backgroundColor: levelDef.guideColor, 
+                boxShadow: `0 0 20px ${levelDef.guideColor}40`,
+                textShadow: 'none'
+              }}
+            >
+              Begin Round
             </button>
           </div>
-
-          {scoreHistory.length > 0 && (
-            <div className="flex items-center gap-2 mb-3 font-mono text-[7px] tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              <span className="uppercase">Last {Math.min(scoreHistory.length, 5)}:</span>
-              {scoreHistory.slice(-5).map((s, i) => (
-                <span key={i} style={{ color: s >= 82 ? '#4ADE80' : s >= 65 ? '#FBBF24' : '#F472B6' }}>{s}%</span>
-              ))}
-            </div>
-          )}
-
-          <div className="font-mono text-[8px] mb-4 tracking-widest" style={{ color: levelDef.guideColor }}>Best: {highScore}%</div>
-
-          <button onClick={onStart} className="clickable px-7 py-2.5 rounded-full font-mono text-[10px] tracking-widest uppercase transition-all cursor-pointer hover:scale-105 border"
-            style={{ backgroundColor: levelDef.guideColor + '18', color: levelDef.guideColor, borderColor: levelDef.guideColor + '55', boxShadow: '0 0 16px ' + levelDef.guideGlow }}>
-            ▶ Begin Round
-          </button>
         </div>
       )}
 
+      {/* PLAYING HUD Overlay */}
       {gameState === 'PLAYING' && (
         <div className="absolute top-2 left-3 z-30 font-mono text-[7px] tracking-widest uppercase select-none pointer-events-none" style={{ color: 'rgba(255,255,255,0.3)' }}>
           <span>{currentTool.name}</span><span className="mx-1">·</span><span>Night Sky</span>
         </div>
       )}
 
+      {/* GAME OVER overlay */}
       {gameState === 'OVER' && (
-        <div className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-6 select-none" style={{ backgroundColor: 'rgba(10,14,26,0.95)' }}>
-          <div className="text-6xl font-mono font-bold mb-1 tracking-widest" style={{
-            color: gradeRef.current === 'S' ? '#FBBF24' : gradeRef.current === 'A' ? '#4ADE80' : gradeRef.current === 'B' ? '#60A5FA' : gradeRef.current === 'C' ? '#F472B6' : '#6B7280',
-            textShadow: '0 0 24px ' + (gradeRef.current === 'S' ? 'rgba(251,191,36,0.55)' : gradeRef.current === 'A' ? 'rgba(74,222,128,0.55)' : gradeRef.current === 'B' ? 'rgba(96,165,250,0.55)' : 'rgba(244,114,182,0.35)'),
-          }}>
-            {gradeRef.current}
-          </div>
-          <div className="font-mono text-lg tracking-wider mb-1" style={{ color: 'rgba(255,255,255,0.85)' }}>{scoreRef.current}% Accuracy</div>
-          <div className="font-mono text-[9px] mb-4 max-w-xs leading-relaxed tracking-wide" style={{ color: 'rgba(255,255,255,0.5)' }}>{feedbackRef.current}</div>
-
-          {scoreHistory.length > 0 && (
-            <div className="flex items-center gap-2 mb-4 font-mono text-[7px] tracking-wider" style={{ color: 'rgba(255,255,255,0.35)' }}>
-              <span className="uppercase">History:</span>
-              {scoreHistory.slice(-5).map((s, i) => (
-                <span key={i} style={{ color: s >= 82 ? '#4ADE80' : s >= 65 ? '#FBBF24' : '#F472B6' }}>{s}%</span>
-              ))}
+        <div 
+          className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-6 select-none animate-fade-in" 
+          style={{ backgroundColor: 'rgba(10, 14, 26, 0.94)', backdropFilter: 'blur(8px)' }}
+        >
+          <div className="w-full max-w-[340px] p-6 bg-[#0f1322]/90 border border-white/10 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col items-center">
+            {/* Grade Circular Badge */}
+            <div 
+              className="w-16 h-16 rounded-full flex items-center justify-center font-mono font-bold text-2xl mb-4 bg-white/2 border"
+              style={{
+                color: gradeRef.current === 'S' ? '#FBBF24' : gradeRef.current === 'A' ? '#4ADE80' : gradeRef.current === 'B' ? '#60A5FA' : gradeRef.current === 'C' ? '#F472B6' : '#6B7280',
+                borderColor: gradeRef.current === 'S' ? '#FBBF2444' : gradeRef.current === 'A' ? '#4ADE8044' : gradeRef.current === 'B' ? '#60A5FA44' : gradeRef.current === 'C' ? '#F472B644' : 'rgba(255,255,255,0.08)',
+                boxShadow: '0 0 20px ' + (gradeRef.current === 'S' ? 'rgba(251,191,36,0.15)' : gradeRef.current === 'A' ? 'rgba(74,222,128,0.15)' : gradeRef.current === 'B' ? 'rgba(96,165,250,0.15)' : 'rgba(244,114,182,0.1)'),
+              }}
+            >
+              {gradeRef.current}
             </div>
-          )}
 
-          <div className="font-mono text-[8px] mb-5 tracking-widest" style={{ color: levelDef.guideColor }}>Best: {highScore}%</div>
+            {/* Score */}
+            <h3 className="font-mono text-sm tracking-wider font-bold mb-1 uppercase text-white">
+              {scoreRef.current}% Accuracy
+            </h3>
+            
+            {/* Feedback message */}
+            <p className="font-mono text-[8px] mb-5 leading-normal text-white/50 px-2 max-w-xs">
+              {feedbackRef.current}
+            </p>
 
-          <button onClick={onStart} className="clickable px-7 py-2.5 rounded-full font-mono text-[10px] tracking-widest uppercase transition-all cursor-pointer hover:scale-105 border"
-            style={{ backgroundColor: levelDef.guideColor + '18', color: levelDef.guideColor, borderColor: levelDef.guideColor + '55', boxShadow: '0 0 16px ' + levelDef.guideGlow }}>
-            ↺ Retry
-          </button>
+            {/* Quick Stats Grid */}
+            <div className="w-full grid grid-cols-2 gap-2 mb-5">
+              <div className="py-2 px-3 rounded-xl bg-white/2 border border-white/6 font-mono text-[8px] tracking-wider flex items-center justify-between text-white/40">
+                <span className="uppercase text-left">Level Best:</span>
+                <span className="font-bold text-right" style={{ color: levelDef.guideColor, textShadow: `0 0 8px ${levelDef.guideColor}40` }}>{highScore}%</span>
+              </div>
+              <div className="py-2 px-3 rounded-xl bg-white/2 border border-white/6 font-mono text-[8px] tracking-wider flex items-center justify-between text-white/40">
+                <span className="uppercase text-left">Grade:</span>
+                <span className="font-bold text-right" style={{ color: '#FBBF24' }}>{gradeRef.current}</span>
+              </div>
+
+              {scoreHistory.length > 0 && (
+                <div className="col-span-2 py-2 px-3.5 rounded-xl bg-white/2 border border-white/6 font-mono text-[8px] tracking-wider flex items-center justify-between text-white/40">
+                  <span className="uppercase">Recent runs:</span>
+                  <div className="flex gap-2">
+                    {scoreHistory.slice(-5).map((s, i) => (
+                      <span key={i} className="font-bold" style={{ color: s >= 82 ? '#4ADE80' : s >= 65 ? '#FBBF24' : '#F472B6' }}>{s}%</span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Action CTA Button */}
+            <button 
+              onClick={onStart} 
+              className="clickable w-full py-3 text-bg font-mono font-bold text-[9.5px] tracking-[0.2em] uppercase rounded-full transition-all duration-300 hover:scale-[1.02] active:scale-95 cursor-pointer"
+              style={{ 
+                backgroundColor: levelDef.guideColor, 
+                boxShadow: `0 0 20px ${levelDef.guideColor}40`,
+                textShadow: 'none'
+              }}
+            >
+              ↺ Retry
+            </button>
+          </div>
         </div>
       )}
     </div>

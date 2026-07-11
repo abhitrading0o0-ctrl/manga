@@ -929,71 +929,118 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({
       {gameState === 'IDLE' && (
         <div
           className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-6 select-none"
-          style={{ backgroundColor: 'rgba(13, 11, 15, 0.95)' }}
+          style={{ backgroundColor: 'rgba(10, 8, 12, 0.93)', backdropFilter: 'blur(8px)' }}
         >
-          <div className="text-4xl mb-3" style={{ color: currentTheme.snakeColorHead, textShadow: `0 0 25px ${currentTheme.snakeColorHead}` }}>
-            🐍
-          </div>
-          <h3 className="font-mono text-sm tracking-wider mb-2 uppercase" style={{ color: currentTheme.snakeColorHead, textShadow: `0 0 8px ${currentTheme.snakeColorHead}` }}>
-            Snake Game
-          </h3>
-          <p className="font-mono text-[9px] mb-2 tracking-widest uppercase" style={{ color: 'rgba(255,255,255,0.45)' }}>
-            Level 1: Grid Runner (Neon)
-          </p>
-          <p className="font-mono text-[8px] mb-1 tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Arrow keys / WASD / Swipe to Turn
-          </p>
-          <p className="font-mono text-[8px] mb-3 tracking-wider uppercase" style={{ color: 'rgba(255,255,255,0.4)' }}>
-            Every 5 Food eaten = Next Level
-          </p>
+          <div className="w-full max-w-[340px] p-6 bg-[#131116]/90 border border-white/10 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col items-center">
+            {/* Header Icon */}
+            <div 
+              className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4 bg-white/5 border border-white/10"
+              style={{ 
+                boxShadow: `0 0 20px ${currentTheme.snakeColorHead}15`,
+                borderColor: `${currentTheme.snakeColorHead}30`
+              }}
+            >
+              🐍
+            </div>
 
-          {/* Level Progress Stepper */}
-          <div className="flex flex-col items-center gap-1.5 my-3 font-mono text-[8px] tracking-widest text-left w-full max-w-[280px]">
-            {LEVELS.map((lvlConfig, idx) => {
-              const isCurrent = (idx + 1) === level;
-              const isPassed = (idx + 1) < level;
-              const isReached = (idx + 1) <= highestLevel;
-              let marker = "  ";
-              let color = "rgba(255,255,255,0.2)"; // LOCKED (dimmed gray)
-              let shadow = "none";
-              if (isCurrent) {
-                marker = "> ";
-                color = currentTheme.snakeColorHead;
-                shadow = `0 0 8px ${currentTheme.snakeColorHead}`;
-              } else if (isPassed) {
-                marker = "• ";
-                color = "#4ADE80"; // PASSED (bright green)
-                shadow = "0 0 4px rgba(74, 222, 128, 0.4)";
-              } else if (isReached) {
-                marker = "o ";
-                color = "rgba(74, 222, 128, 0.75)"; // REACHED (soft green)
-                shadow = "0 0 3px rgba(74, 222, 128, 0.2)";
-              }
-              return (
-                <div key={idx} style={{ color, textShadow: shadow }} className="flex justify-between w-full">
-                  <span>{marker}Lvl {idx + 1}: {lvlConfig.name}</span>
-                  <span>{isReached ? "REACHED" : "LOCKED"}</span>
-                </div>
-              );
-            })}
-          </div>
+            {/* Game Name */}
+            <h3 
+              className="font-mono text-sm tracking-[0.25em] font-bold mb-1 uppercase" 
+              style={{ color: currentTheme.snakeColorHead, textShadow: `0 0 10px ${currentTheme.snakeColorHead}60` }}
+            >
+              Snake Game
+            </h3>
+            
+            {/* Short Tagline */}
+            <p className="font-mono text-[8px] mb-4 tracking-widest uppercase text-white/40">
+              Level {level}: {currentTheme.name}
+            </p>
 
-          <div className="flex gap-4 font-mono text-[9px] mb-6 tracking-widest uppercase">
-            <span style={{ color: currentTheme.snakeColorHead }}>High Score: {highScore}</span>
-            <span style={{ color: '#FBBF24' }}>Best Level: {highestLevel}</span>
+            {/* Controls Info Banner */}
+            <div className="w-full py-2.5 px-3 bg-white/5 border border-white/5 rounded-xl flex flex-col gap-1 mb-5">
+              <p className="font-mono text-[7.5px] tracking-wider uppercase text-white/60">
+                🎮 Arrow keys / WASD / Swipe
+              </p>
+              <p className="font-mono text-[7.5px] tracking-wider uppercase text-white/50">
+                🍎 Eat 5 Food = Next Level
+              </p>
+            </div>
+
+            {/* Level Stepper Card Stack */}
+            <div className="w-full flex flex-col gap-1.5 mb-5">
+              {LEVELS.map((lvlConfig, idx) => {
+                const isCurrent = (idx + 1) === level;
+                const isPassed = (idx + 1) < level;
+                const isReached = (idx + 1) <= highestLevel;
+
+                let rowBg = "bg-white/5 border-white/5";
+                let textColor = "text-white/50";
+                let statusLabel = "LOCKED";
+                let statusColor = "text-white/20";
+                let icon = (
+                  <svg className="w-3 h-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                );
+
+                if (isCurrent) {
+                  rowBg = "bg-emerald-500/10 border-emerald-500/20 shadow-[0_0_15px_rgba(16,185,129,0.05)]";
+                  textColor = "text-emerald-400 font-bold";
+                  statusLabel = "PLAY";
+                  statusColor = "text-emerald-400";
+                  icon = (
+                    <span className="relative flex h-2 w-2">
+                      <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                    </span>
+                  );
+                } else if (isPassed || isReached) {
+                  rowBg = "bg-white/5 border-white/10 hover:bg-white/8 transition-colors duration-200";
+                  textColor = "text-white/80";
+                  statusLabel = "CLEARED";
+                  statusColor = "text-emerald-500/80";
+                  icon = (
+                    <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  );
+                }
+
+                return (
+                  <div 
+                    key={idx} 
+                    className={`w-full flex items-center justify-between px-3.5 py-1.5 border rounded-xl font-mono text-[8px] tracking-wide ${rowBg}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {icon}
+                      <span className={textColor}>Lvl {idx + 1}: {lvlConfig.name}</span>
+                    </div>
+                    <span className={`font-bold ${statusColor}`}>{statusLabel}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="flex gap-2.5 w-full font-mono text-[9px] mb-5 tracking-wide justify-center">
+              <div className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-white/5 border border-white/10">
+                <span className="text-white/30 text-[7px] uppercase tracking-widest mb-0.5">High Score</span>
+                <span className="font-bold text-white tracking-widest text-[10px]" style={{ textShadow: `0 0 8px ${currentTheme.snakeColorHead}40` }}>{highScore}</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-white/5 border border-white/10">
+                <span className="text-white/30 text-[7px] uppercase tracking-widest mb-0.5">Best Level</span>
+                <span className="font-bold text-[#FBBF24] tracking-widest text-[10px]" style={{ textShadow: `0 0 8px #FBBF2440` }}>Lvl {highestLevel}</span>
+              </div>
+            </div>
+
+            {/* Action CTA Button */}
+            <button
+              onClick={onStart}
+              className="clickable w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-bg font-mono font-bold text-[9px] tracking-[0.2em] uppercase rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer"
+            >
+              Start Game
+            </button>
           </div>
-          <button
-            onClick={onStart}
-            className="clickable px-6 py-2.5 rounded-full font-mono text-[10px] tracking-widest uppercase transition-all cursor-pointer hover:scale-105 border"
-            style={{
-              backgroundColor: 'rgba(74, 222, 128, 0.15)',
-              color: currentTheme.snakeColorHead,
-              borderColor: 'rgba(74, 222, 128, 0.4)',
-              boxShadow: `0 0 15px rgba(74, 222, 128, 0.2)`,
-            }}
-          >
-            ▶ Start Game
-          </button>
         </div>
       )}
 
@@ -1001,62 +1048,96 @@ export const SnakeGame: React.FC<SnakeGameProps> = ({
       {gameState === 'OVER' && (
         <div
           className="absolute inset-0 z-30 flex flex-col justify-center items-center text-center p-6 select-none"
-          style={{ backgroundColor: 'rgba(13, 11, 15, 0.95)' }}
+          style={{ backgroundColor: 'rgba(10, 8, 12, 0.93)', backdropFilter: 'blur(8px)' }}
         >
-          <h3 className="font-mono text-lg tracking-wider mb-2 uppercase" style={{ color: '#EF4444', textShadow: '0 0 12px rgba(239, 68, 68, 0.6)' }}>
-            Game Over
-          </h3>
-          <p className="font-mono text-xs tracking-wider mb-2 uppercase" style={{ color: 'rgba(255,255,255,0.8)' }}>
-            Score: {scoreRef.current}
-          </p>
+          <div className="w-full max-w-[340px] p-6 bg-[#131116]/90 border border-white/10 rounded-2xl shadow-[0_25px_60px_rgba(0,0,0,0.85)] flex flex-col items-center">
+            {/* Header Icon */}
+            <div className="w-12 h-12 rounded-xl flex items-center justify-center text-2xl mb-4 bg-red-500/10 border border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.1)]">
+              💥
+            </div>
 
-          {/* Level Progress Stepper */}
-          <div className="flex flex-col items-center gap-1.5 my-3 font-mono text-[8px] tracking-widest text-left w-full max-w-[280px]">
-            {LEVELS.map((lvlConfig, idx) => {
-              const isCurrent = (idx + 1) === level;
-              const isPassed = (idx + 1) < level;
-              const isReached = (idx + 1) <= highestLevel;
-              let marker = "  ";
-              let color = "rgba(255,255,255,0.2)"; // LOCKED (dimmed gray)
-              let shadow = "none";
-              if (isCurrent) {
-                marker = "> ";
-                color = currentTheme.snakeColorHead;
-                shadow = `0 0 8px ${currentTheme.snakeColorHead}`;
-              } else if (isPassed) {
-                marker = "• ";
-                color = "#4ADE80"; // PASSED (bright green)
-                shadow = "0 0 4px rgba(74, 222, 128, 0.4)";
-              } else if (isReached) {
-                marker = "o ";
-                color = "rgba(74, 222, 128, 0.75)"; // REACHED (soft green)
-                shadow = "0 0 3px rgba(74, 222, 128, 0.2)";
-              }
-              return (
-                <div key={idx} style={{ color, textShadow: shadow }} className="flex justify-between w-full">
-                  <span>{marker}Lvl {idx + 1}: {lvlConfig.name}</span>
-                  <span>{isReached ? "REACHED" : "LOCKED"}</span>
-                </div>
-              );
-            })}
-          </div>
+            {/* Title */}
+            <h3 className="font-mono text-sm tracking-[0.25em] font-bold mb-1 uppercase text-red-500" style={{ textShadow: '0 0 10px rgba(239, 68, 68, 0.4)' }}>
+              Game Over
+            </h3>
+            
+            {/* Score Display */}
+            <p className="font-mono text-[9px] mb-4 tracking-widest uppercase text-white/50">
+              Score: <span className="text-white font-bold" style={{ textShadow: '0 0 8px rgba(255,255,255,0.3)' }}>{scoreRef.current}</span>
+            </p>
 
-          <div className="flex gap-4 font-mono text-[9px] mb-6 tracking-wider uppercase">
-            <span style={{ color: currentTheme.snakeColorHead }}>Best Score: {highScore}</span>
-            <span style={{ color: '#FBBF24' }}>Best Level: {highestLevel}</span>
+            {/* Level Stepper Card Stack */}
+            <div className="w-full flex flex-col gap-1.5 mb-5">
+              {LEVELS.map((lvlConfig, idx) => {
+                const isCurrent = (idx + 1) === level;
+                const isPassed = (idx + 1) < level;
+                const isReached = (idx + 1) <= highestLevel;
+
+                let rowBg = "bg-white/5 border-white/5";
+                let textColor = "text-white/50";
+                let statusLabel = "LOCKED";
+                let statusColor = "text-white/20";
+                let icon = (
+                  <svg className="w-3 h-3 text-white/20" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                );
+
+                if (isCurrent) {
+                  rowBg = "bg-red-500/10 border-red-500/20 shadow-[0_0_15px_rgba(239,68,68,0.05)]";
+                  textColor = "text-red-400 font-bold";
+                  statusLabel = "CRASHED";
+                  statusColor = "text-red-400";
+                  icon = (
+                    <span className="relative flex h-1.5 w-1.5 rounded-full bg-red-500"></span>
+                  );
+                } else if (isPassed || isReached) {
+                  rowBg = "bg-white/5 border-white/10 hover:bg-white/8 transition-colors duration-200";
+                  textColor = "text-white/80";
+                  statusLabel = "CLEARED";
+                  statusColor = "text-emerald-500/80";
+                  icon = (
+                    <svg className="w-3 h-3 text-emerald-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                    </svg>
+                  );
+                }
+
+                return (
+                  <div 
+                    key={idx} 
+                    className={`w-full flex items-center justify-between px-3.5 py-1.5 border rounded-xl font-mono text-[8px] tracking-wide ${rowBg}`}
+                  >
+                    <div className="flex items-center gap-2">
+                      {icon}
+                      <span className={textColor}>Lvl {idx + 1}: {lvlConfig.name}</span>
+                    </div>
+                    <span className={`font-bold ${statusColor}`}>{statusLabel}</span>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Quick Stats Grid */}
+            <div className="flex gap-2.5 w-full font-mono text-[9px] mb-5 tracking-wide justify-center">
+              <div className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-white/5 border border-white/10">
+                <span className="text-white/30 text-[7px] uppercase tracking-widest mb-0.5">Best Score</span>
+                <span className="font-bold text-white tracking-widest text-[10px]" style={{ textShadow: `0 0 8px ${currentTheme.snakeColorHead}40` }}>{highScore}</span>
+              </div>
+              <div className="flex-1 flex flex-col items-center justify-center py-2 px-1 rounded-xl bg-white/5 border border-white/10">
+                <span className="text-white/30 text-[7px] uppercase tracking-widest mb-0.5">Best Level</span>
+                <span className="font-bold text-[#FBBF24] tracking-widest text-[10px]" style={{ textShadow: `0 0 8px #FBBF2440` }}>Lvl {highestLevel}</span>
+              </div>
+            </div>
+
+            {/* Action CTA Button */}
+            <button
+              onClick={onStart}
+              className="clickable w-full py-3 bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-400 hover:to-teal-500 text-bg font-mono font-bold text-[9px] tracking-[0.2em] uppercase rounded-full shadow-[0_0_20px_rgba(16,185,129,0.3)] hover:shadow-[0_0_25px_rgba(16,185,129,0.45)] hover:scale-[1.02] active:scale-95 transition-all duration-300 cursor-pointer"
+            >
+              ↺ Retry
+            </button>
           </div>
-          <button
-            onClick={onStart}
-            className="clickable px-6 py-2.5 rounded-full font-mono text-[10px] tracking-widest uppercase transition-all cursor-pointer hover:scale-105 border"
-            style={{
-              backgroundColor: 'rgba(74, 222, 128, 0.15)',
-              color: currentTheme.snakeColorHead,
-              borderColor: 'rgba(74, 222, 128, 0.4)',
-              boxShadow: `0 0 15px rgba(74, 222, 128, 0.2)`,
-            }}
-          >
-            ↺ Retry
-          </button>
         </div>
       )}
     </div>
