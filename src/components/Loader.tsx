@@ -9,7 +9,6 @@ export const Loader: React.FC = () => {
 
   const [progress, setProgress] = useState(0);
   const [showAudioPrompt, setShowAudioPrompt] = useState(false);
-  const [statusText, setStatusText] = useState('✨ Gathering stardust...');
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -112,13 +111,13 @@ export const Loader: React.FC = () => {
       setProgress(currentPct);
 
       if (currentPct < 30) {
-        setStatusText('✨ Gathering stardust...');
+        // Gathering stardust...
       } else if (currentPct < 60) {
-        setStatusText('🌌 Mapping constellations...');
+        // Mapping constellations...
       } else if (currentPct < 90) {
-        setStatusText('🌸 Growing magical sakura...');
+        // Growing magical sakura...
       } else {
-        setStatusText('🎁 Preparing Something Special...');
+        // Preparing Something Special...
       }
 
       if (loadedCount === TOTAL_ASSETS) {
