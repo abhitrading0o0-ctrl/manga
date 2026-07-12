@@ -25,5 +25,4 @@ dist-ssr
 
 # Large audio/video files in peace-room
 public/peace-room/**/*.webm
-public/peace-room/**/*.mp3
 

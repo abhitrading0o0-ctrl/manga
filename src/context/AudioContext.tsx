@@ -59,24 +59,24 @@ const PEACE_TRACKS = [
     label: 'Summer',
     title: 'Summer',
     icon: 'sun',
-    file: '/peace-room/summer/audio.webm',
-    url: '/peace-room/summer/audio.webm',
+    file: '/peace-room/summer/audio.mp3',
+    url: '/peace-room/summer/audio.mp3',
   },
   {
     id: 'ocean',
     label: 'Ocean',
     title: 'Ocean',
     icon: 'waves',
-    file: '/peace-room/ocean/audio.webm',
-    url: '/peace-room/ocean/audio.webm',
+    file: '/peace-room/ocean/audio.mp3',
+    url: '/peace-room/ocean/audio.mp3',
   },
   {
     id: 'rain',
     label: 'Rain',
     title: 'Rain',
     icon: 'cloud-rain',
-    file: '/peace-room/rain/audio.webm',
-    url: '/peace-room/rain/audio.webm',
+    file: '/peace-room/rain/audio.mp3',
+    url: '/peace-room/rain/audio.mp3',
   }
 ];
 
