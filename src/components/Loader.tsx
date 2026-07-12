@@ -230,15 +230,10 @@ export const Loader: React.FC = () => {
               
               {/* Geometric central spinner core */}
               <div className="w-24 h-24 rounded-full bg-[#121316]/80 border border-white/5 flex flex-col items-center justify-center shadow-2xl backdrop-blur-md">
-                <span className="text-white font-display font-bold text-2xl tracking-tighter">{progress}%</span>
-                <span className="text-gold font-sans text-[8px] uppercase tracking-widest mt-1">Loaded</span>
               </div>
             </div>
 
             {/* Glowing status */}
-            <h2 className="text-white font-display text-base font-light tracking-[0.2em] mb-4 uppercase select-none opacity-90">
-              {statusText}
-            </h2>
 
             {/* Fading bottom indicator */}
             <div className="w-32 h-[1px] bg-gradient-to-r from-transparent via-gold/30 to-transparent animate-pulse" />
